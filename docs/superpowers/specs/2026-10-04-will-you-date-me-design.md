@@ -23,8 +23,10 @@ index.html          – the 3 screens: question / date picker / ticket
 styles.css          – pastel pink + cream palette, faint paw-print background, all keyframes
 js/config.js        – every editable text and setting (see below)
 js/cats.js          – SVG builders: Mochi (expressions), Biscuit, paw, cat-face/paw/heart confetti
-js/fx.js            – shared helpers: randomSafeSpot(), speech bubble, caption, screen shake, comic "SWAT!" burst
-js/no-button.js     – escalation state machine (attempt count → step function)
+js/geometry.js      – pure geometry (unit-tested): randomSafeSpot(), safeCorner(), nearestEdge(), paw aiming, YES fit
+js/fx.js            – DOM effects: paw strike/peek, glide, speech bubble, caption, screen shake, comic "SWAT!" burst
+js/escalation.js    – escalation state machine (attempt count → step, busy lock; unit-tested)
+js/no-button.js     – the five step choreographies + hover tease + wiring
 js/celebration.js   – cat rain + Mochi's happy dance
 js/date-picker.js   – date cards → ticket, "change my pick"
 js/notify.js        – ntfy.sh sender (fire-and-forget)
@@ -60,7 +62,7 @@ const CONFIG = {
 | 2 | **The Warning** | Mochi's ears flatten and a "mrrp?!" bubble appears. After a 300ms pause, a *double* swat: the first tap makes No wobble, the second sends it flying to a new spot. | "Really sure??" | "Mochi is very protective of this button." | 1.5 |
 | 3 | **The Sit** | Biscuit, a chubby grey cat, falls from the top of the screen with a THUD (small screen shake) and sits right on No, which disappears underneath. After about 1.2s, No squeezes out sideways (squash and stretch), smaller, and scoots to a new spot leaving a paw-print trail. Biscuit stays loafed where he landed for the rest of the visit, with a little "zzz". | "pls 🥺" | "Biscuit is sitting on it. Sorry, those are the rules." | 1.8 |
 | 4 | **The Bat-Around** | Two paws pop out from opposite sides and bat No back and forth like a toy, three ping-pongs, then fling it into a corner, now tiny (0.6×). Mochi's tail swishes twice as fast. | "no" (tiny) | "Cats don't take no for an answer." | 2.2, and the ears on YES wiggle |
-| 5 | **Left the Chat** | Mochi gets up, trots over, picks No up in her mouth and trots off-screen. Caption 1: "*no has left the chat* 😼". After 2 seconds she trots back in from the other side and drops the button. It now has bite marks (an SVG mask) and reads **"yes 💕"**. Caption 2: "Mochi brought it back. With a few edits." | "yes 💕" | as described | 2.6 |
+| 5 | **Left the Chat** | Mochi gets up, trots over, picks No up in her mouth and trots off-screen. Caption 1: "*no has left the chat* 😼". After 2 seconds she trots back in from the other side and drops the button. It now has bite marks (a CSS mask) and reads **"yes 💕"**. Caption 2: "Mochi brought it back. With a few edits." | "yes 💕" | as described | 2.6 |
 
 After step 5, both buttons mean YES. Clicking the former No button triggers the celebration like YES does. The notification reports how many No attempts she made.
 
@@ -93,10 +95,10 @@ A ticket-style card with a perforated edge:
 
 Under the ticket: "Screenshot this and send it to me 😽 …actually, Mochi already told me." This is honest about the automatic notification, and it's a cute reveal. A small "change my pick" link goes back to the cards.
 
-🔔 Notification sent: **"Shira picked a date! 🐾"**, body "☕🐱 Cat café". If she changes her pick: "Shira changed her pick → 🍿 Movie night".
+🔔 Notification sent: **"Shira picked a date! 🐾"**, body "☕🐱 Cat café". If she changes her pick: title "Shira changed her pick", body "→ 🍿 Movie night".
 
 ## Notifications (ntfy.sh)
-- `notify.js` sends `fetch("https://ntfy.sh/" + topic, { method: "POST", body, headers: { Title, Tags: "cat,heart", Priority: "high" }, keepalive: true })`. ntfy.sh allows cross-origin requests from any page.
+- `notify.js` POSTs a JSON body `{ topic, title, message, tags: ["cat","heart"], priority: 4 }` to `https://ntfy.sh/` with `mode: "no-cors"` and `keepalive: true`. It uses the JSON body because emoji aren't allowed in HTTP header values, and `fetch` throws if you try. Plain text with no custom headers makes this a "simple" request, so there's no CORS preflight.
 - It's fire-and-forget: failures are swallowed silently, so Shira never sees an error.
 - The YES notification is sent at most once per page load.
 - **Test mode:** adding `?test` to the URL puts "🧪 TEST" in front of every notification title, so you can tell your own test runs from the real thing.
@@ -105,7 +107,9 @@ Under the ticket: "Screenshot this and send it to me 😽 …actually, Mochi alr
 ## Debug helpers (for testing)
 - `?step=N` starts with N No attempts already done, to check one step quickly.
 - `?screen=dates` / `?screen=ticket` jumps straight to a later screen.
+- `?demo` makes Mochi perform all five tricks by herself, one after another (YES is never clicked, so no notification is sent).
 - These can be combined with `?test`.
+- Unit tests: `python3 tests/run.py` runs `tests/test.html` in headless Chrome (there's no Node on this machine). `python3 tests/shot.py` takes screenshots for visual checks.
 
 ## Process notes
 - On approval: `git init` the folder, save this design to `docs/superpowers/specs/2026-10-04-will-you-date-me-design.md` and commit it. Then write the implementation plan with writing-plans and implement.
