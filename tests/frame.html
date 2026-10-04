@@ -9,7 +9,8 @@
   </style>
 </head>
 <body>
-  <!-- Used by shot.py: Chrome windows can't be narrower than ~500px, so phone widths render in an iframe. -->
+  <!-- Used by shot.py: Chrome windows can't be narrower than ~500px, so phone widths render in an
+       iframe; with ?hold=ms (live mode) a slow request delays the load event, i.e. the screenshot. -->
   <iframe id="frame"></iframe>
   <script>
     const params = new URLSearchParams(location.search);
@@ -17,6 +18,39 @@
     frame.width = params.get("w");
     frame.height = params.get("h");
     frame.src = params.get("src");
+    if (params.get("hold")) {
+      const img = document.createElement("img");
+      img.style.display = "none";
+      img.src = `/__sleep?ms=${params.get("hold")}`;
+      document.body.appendChild(img);
+    }
+
+    // ?act=hover:no@800,down:no@1000,click:no@1100 — scripted input (live mode, same origin only).
+    //   hover = mouse move 40px left of the target, down = mouse pointerdown,
+    //   click = el.click() (detail 0, i.e. what a keyboard Enter produces). Targets: no, yes, mochi, card<N>.
+    const TARGETS = { no: "no-btn", yes: "yes-btn", mochi: "mochi" };
+    frame.addEventListener("load", () => {
+      const win = frame.contentWindow;
+      const doc = frame.contentDocument;
+      (params.get("act") || "").split(",").filter(Boolean).forEach((spec) => {
+        const [, type, target, at] = spec.match(/^(\w+):(\w+)@(\d+)$/);
+        setTimeout(() => {
+          const el = target.startsWith("card")
+            ? doc.querySelectorAll(".date-card")[Number(target.slice(4))]
+            : doc.getElementById(TARGETS[target]);
+          const r = el.getBoundingClientRect();
+          const x = r.left + r.width / 2;
+          const y = r.top + r.height / 2;
+          if (type === "hover") {
+            doc.dispatchEvent(new win.PointerEvent("pointermove", { pointerType: "mouse", clientX: x - 40, clientY: y, bubbles: true }));
+          } else if (type === "down") {
+            el.dispatchEvent(new win.PointerEvent("pointerdown", { pointerType: "mouse", clientX: x, clientY: y, bubbles: true, cancelable: true }));
+          } else if (type === "click") {
+            el.click();
+          }
+        }, Number(at));
+      });
+    });
   </script>
 </body>
 </html>

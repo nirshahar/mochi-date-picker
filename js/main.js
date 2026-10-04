@@ -24,6 +24,15 @@ window.App = window.App || {};
     }, 3000 + Math.random() * 3000);
   }
 
+  // ?demo: Mochi performs every trick by herself (handy for previewing).
+  async function runDemo(esc) {
+    await App.fx.wait(1200);
+    while (!esc.converted) {
+      await esc.attempt();
+      await App.fx.wait(1500);
+    }
+  }
+
   function init() {
     const $ = (id) => document.getElementById(id);
     const T = CONFIG.text;
@@ -47,7 +56,17 @@ window.App = window.App || {};
       setTimeout(() => { if (mochiSvg.dataset.mood === "happy") mochiSvg.dataset.mood = ""; }, 1200);
     });
 
+    const params = parseParams(window.location.search);
+    const onYes = App.fx.once(() => noCtl.deactivate());
+    const noCtl = App.setupNoButton({
+      noBtn: $("no-btn"), yesBtn: $("yes-btn"), mochiEl, titleEl: $("question-title"),
+      captionEl: $("caption"), appEl: $("app"), onYes,
+    });
+    $("yes-btn").addEventListener("click", onYes);
+
     showScreen("question");
+    if (params.step) requestAnimationFrame(() => noCtl.skipTo(params.step));
+    else if (params.demo) runDemo(noCtl.escalation);
   }
 
   App.parseParams = parseParams;
