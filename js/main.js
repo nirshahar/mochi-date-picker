@@ -34,6 +34,7 @@ window.App = window.App || {};
   }
 
   function init() {
+    const params = parseParams(window.location.search);
     const $ = (id) => document.getElementById(id);
     const T = CONFIG.text;
 
@@ -56,8 +57,32 @@ window.App = window.App || {};
       setTimeout(() => { if (mochiSvg.dataset.mood === "happy") mochiSvg.dataset.mood = ""; }, 1200);
     });
 
-    const params = parseParams(window.location.search);
-    const onYes = App.fx.once(() => noCtl.deactivate());
+    let hasPicked = false;
+    function showTicket(idea) {
+      App.dates.renderTicket($("ticket"), {
+        herName: CONFIG.herName, fromName: CONFIG.fromName, catName: CONFIG.catName, idea,
+      });
+      showScreen("ticket");
+    }
+    function showDates() {
+      App.dates.renderDateCards($("date-cards"), CONFIG.dateIdeas, (idea) => {
+        App.notify.send(App.notify.pickMessage(idea, hasPicked), { test: params.test });
+        hasPicked = true;
+        showTicket(idea);
+      });
+      showScreen("dates");
+    }
+    $("change-pick").addEventListener("click", showDates);
+
+    const onYes = App.fx.once(async () => {
+      noCtl.deactivate();
+      App.notify.send(App.notify.yesMessage(noCtl.escalation.count), { test: params.test });
+      await App.celebrate({
+        yesBtn: $("yes-btn"), noBtn: $("no-btn"), mochiEl, biscuit: noCtl.biscuit,
+        titleEl: $("question-title"), subEl: $("yay-sub"), captionEl: $("caption"),
+      });
+      showDates();
+    });
     const noCtl = App.setupNoButton({
       noBtn: $("no-btn"), yesBtn: $("yes-btn"), mochiEl, titleEl: $("question-title"),
       captionEl: $("caption"), appEl: $("app"), onYes,
@@ -65,7 +90,9 @@ window.App = window.App || {};
     $("yes-btn").addEventListener("click", onYes);
 
     showScreen("question");
-    if (params.step) requestAnimationFrame(() => noCtl.skipTo(params.step));
+    if (params.screen === "dates") showDates();
+    else if (params.screen === "ticket") showTicket(CONFIG.dateIdeas[0]);
+    else if (params.step) requestAnimationFrame(() => noCtl.skipTo(params.step));
     else if (params.demo) runDemo(noCtl.escalation);
   }
 

@@ -27,8 +27,8 @@
 
     // ?act=hover:no@800,down:no@1000,click:no@1100 — scripted input (live mode, same origin only).
     //   hover = mouse move 40px left of the target, down = mouse pointerdown,
-    //   click = el.click() (detail 0, i.e. what a keyboard Enter produces). Targets: no, yes, mochi, card<N>.
-    const TARGETS = { no: "no-btn", yes: "yes-btn", mochi: "mochi" };
+    //   click = el.click() (detail 0, i.e. what a keyboard Enter produces). Targets: no, yes, mochi, change, card<N>.
+    const TARGETS = { no: "no-btn", yes: "yes-btn", mochi: "mochi", change: "change-pick" };
     frame.addEventListener("load", () => {
       const win = frame.contentWindow;
       const doc = frame.contentDocument;
