@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Cat gallery</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .row { display: flex; flex-wrap: wrap; gap: 24px; padding: 24px; align-items: flex-end; }
+    .cell { width: 150px; text-align: center; font-family: var(--font); }
+    .cell svg { display: block; width: 100%; height: auto; }
+    .paw-cell { height: 240px; overflow: hidden; }
+    .paw-cell svg { width: 90px; overflow: visible; margin: 10px auto 0; }
+    .small { width: 60px; }
+  </style>
+</head>
+<body>
+  <div class="row" id="moods"></div>
+  <div class="row" id="others"></div>
+  <script src="../js/cats.js"></script>
+  <script>
+    const add = (rowId, markup, label, cls = "cell") => {
+      const cell = document.createElement("div");
+      cell.className = cls;
+      cell.innerHTML = `${markup}<div>${label}</div>`;
+      document.getElementById(rowId).appendChild(cell);
+      return cell.querySelector("svg");
+    };
+    ["", "suspicious", "smug", "alarmed", "happy"].forEach((mood) => {
+      add("moods", App.cats.mochi(), mood || "neutral").dataset.mood = mood;
+    });
+    add("moods", App.cats.mochi(), "blink").classList.add("blink");
+    add("others", App.cats.biscuit(), "Biscuit");
+    add("others", App.cats.paw(), "paw", "cell paw-cell");
+    App.cats.FUR.forEach(([fur, eye]) => add("others", App.cats.catFace(fur, eye), "face", "cell small"));
+    add("others", App.cats.pawPrint("#e84d80"), "print", "cell small");
+    add("others", App.cats.heart("#ff6b9a"), "heart", "cell small");
+  </script>
+</body>
+</html>

@@ -125,3 +125,31 @@ button:focus-visible { outline: 3px dashed var(--pink-dark); outline-offset: 4px
   .mochi-spot { width: 130px; }
   .buttons { gap: 1.2rem; min-height: 160px; }
 }
+
+/* ---------- cats ---------- */
+.mochi-spot svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.cat .ear,
+.cat .tail,
+.cat .eyes-open { transform-box: fill-box; }
+
+.cat .ear { transform-origin: 50% 100%; transition: transform 0.2s ease; }
+.cat[data-mood="alarmed"] .ear-l { transform: rotate(-38deg) translateY(6px); }
+.cat[data-mood="alarmed"] .ear-r { transform: rotate(38deg) translateY(6px); }
+
+.cat .eyes-open { transform-origin: 50% 50%; transition: transform 0.07s; }
+.cat.blink .eyes-open { transform: scaleY(0.1); }
+
+.cat .tail { transform-origin: 0% 100%; animation: swish 2.6s ease-in-out infinite alternate; }
+.cat.tail-fast .tail { animation-duration: 0.8s; }
+@keyframes swish { from { transform: rotate(-10deg); } to { transform: rotate(12deg); } }
+
+.cat .lids,
+.cat .eyes-happy,
+.cat .mouth-smug { display: none; }
+.cat[data-mood="suspicious"] .lids,
+.cat[data-mood="smug"] .lids { display: inline; }
+.cat[data-mood="smug"] .mouth { display: none; }
+.cat[data-mood="smug"] .mouth-smug { display: inline; }
+.cat[data-mood="happy"] .eyes-open { display: none; }
+.cat[data-mood="happy"] .eyes-happy { display: inline; }
