@@ -13,14 +13,14 @@ test("config: five date ideas, each with emoji, title and blurb", () => {
   CONFIG.dateIdeas.forEach((d) => assert(d.emoji && d.title && d.blurb, JSON.stringify(d)));
 });
 
-test("config: ntfy topic is long and random", () => {
-  assert(/^shira-date-[0-9a-f]{16}$/.test(CONFIG.ntfyTopic), CONFIG.ntfyTopic);
+test("config: ntfy topic ends in 16 random hex characters", () => {
+  assert(/^[a-z0-9]+(-[a-z0-9]+)*-[0-9a-f]{16}$/.test(CONFIG.ntfyTopic), CONFIG.ntfyTopic);
 });
 
-test("config: the question is addressed to Shira", () => {
-  eq(CONFIG.text.question, "Shira, will you go on a date with me? 🐾");
+test("config: the question is addressed to her", () => {
+  eq(CONFIG.text.question, `${CONFIG.herName}, will you go on a date with me? 🐾`);
 });
 
-test("config: the ticket is signed by Nir", () => {
-  eq(CONFIG.fromName, "Nir");
+test("config: the page title is addressed to her", () => {
+  eq(CONFIG.text.pageTitle, `A question for ${CONFIG.herName} 🐾`);
 });

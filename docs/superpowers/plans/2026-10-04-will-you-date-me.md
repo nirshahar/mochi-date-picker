@@ -1,8 +1,8 @@
-# "Will You Date Me, Shira?" Implementation Plan
+# "Will You Date Me, {HER}?" Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** A cat-themed "will you date me" page for Shira. Mochi the cat sabotages the "No" button in five escalating ways. After YES there's a celebration, a date-idea picker and an "official date ticket", and a push notification reaches the author's phone through ntfy.sh.
+**Goal:** A cat-themed "will you date me" page for {HER}. Mochi the cat sabotages the "No" button in five escalating ways. After YES there's a celebration, a date-idea picker and an "official date ticket", and a push notification reaches the author's phone through ntfy.sh.
 
 **Architecture:** A static site with no build step. Classic `<script>` tags (not modules) attach everything to one global `App` namespace, plus a global `CONFIG` that holds all the copy. Pure logic lives in `geometry.js`, `escalation.js` and `notify.js` and is unit-tested in headless Chrome. The DOM and animation code (`fx.js`, `no-button.js`, `celebration.js`) is checked with headless screenshots and by hand. The cats are inline SVG strings. Animations use the Web Animations API (`el.animate(...).finished`) for sequencing, plus CSS keyframes for looping effects.
 
@@ -17,14 +17,14 @@
 - All user-facing copy is English and lives in `js/config.js`, word for word as given in Task 1.
 - Font: `"Fredoka", "Trebuchet MS", system-ui, sans-serif`, loaded from Google Fonts.
 - The "No" button reacts to `pointerdown` (mouse and touch) and to keyboard clicks (`click` with `detail === 0`). Nothing depends on hover alone; the hover tease is an extra.
-- Notifications are fire-and-forget. Shira must never see an error, and a failed request can't break the page.
+- Notifications are fire-and-forget. {HER} must never see an error, and a failed request can't break the page.
 - Targets are the latest desktop Chrome and Firefox. The layout must not break at 375px wide.
 - Script load order (index.html and tests/test.html): `config, cats, geometry, fx, escalation, notify, no-button, celebration, date-picker, main`.
 - Every commit message ends with the trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
 ## Review Focus
 
-1. **Emoji in notification titles.** Sending the title as an HTTP header makes `fetch` throw ("Shira said YES! 💕" isn't ISO-8859-1), so the notification would silently never arrive. Expected: the title goes in the JSON body and no custom headers are sent. *Test: Task 4, "notify.send: JSON body to the ntfy root, emoji safe".*
+1. **Emoji in notification titles.** Sending the title as an HTTP header makes `fetch` throw ("{HER} said YES! 💕" isn't ISO-8859-1), so the notification would silently never arrive. Expected: the title goes in the JSON body and no custom headers are sent. *Test: Task 4, "notify.send: JSON body to the ntfy root, emoji safe".*
 2. **Fast or repeated clicks on No during an animation.** Expected: they're ignored, no step is skipped, and two steps never run at once. *Test: Task 3, "clicks during an animation are ignored".*
 3. **A step's animation throws** (old browser, element removed mid-animation). Expected: the button doesn't freeze; the step's end state is applied and the next attempt works. *Test: Task 3, "a failing step still settles and frees the button".*
 4. **Tiny viewports, crowded screens, window resize.** Expected: No always stays fully on screen and falls back to the emptiest corner. *Tests: Task 2, "falls back to the emptiest corner", "safeCorner never leaves the viewport", "works on a viewport smaller than the button", "clampToViewport pulls an off-screen button back in".*
@@ -265,11 +265,11 @@ test("config: five date ideas, each with emoji, title and blurb", () => {
 });
 
 test("config: ntfy topic is long and random", () => {
-  assert(/^shira-date-[0-9a-f]{16}$/.test(CONFIG.ntfyTopic), CONFIG.ntfyTopic);
+  assert(/^{her}-date-[0-9a-f]{16}$/.test(CONFIG.ntfyTopic), CONFIG.ntfyTopic);
 });
 
-test("config: the question is addressed to Shira", () => {
-  eq(CONFIG.text.question, "Shira, will you go on a date with me? 🐾");
+test("config: the question is addressed to {HER}", () => {
+  eq(CONFIG.text.question, "{HER}, will you go on a date with me? 🐾");
 });
 ```
 
@@ -288,7 +288,7 @@ Run: `python3 -c "import secrets; print(secrets.token_hex(8))"` and paste the 16
 window.App = window.App || {};
 
 const CONFIG = (() => {
-  const HER = "Shira";
+  const HER = "{HER}";
   const CAT = "Mochi";
   const SITTER = "Biscuit";
 
@@ -298,7 +298,7 @@ const CONFIG = (() => {
     catName: CAT,
     sittingCatName: SITTER,
     // Secret ntfy.sh topic: subscribe to it in the ntfy app to get the notifications.
-    ntfyTopic: "shira-date-<16-hex-chars>",
+    ntfyTopic: "{her}-date-<16-hex-chars>",
 
     text: {
       question: `${HER}, will you go on a date with me? 🐾`,
@@ -348,7 +348,7 @@ Expected: `ALL 4 PASSED`, exit code 0.
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>A question for Shira 🐾</title>
+  <title>A question for {HER} 🐾</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -953,20 +953,20 @@ git commit -m "feat: escalation state machine with busy lock" -m "Co-Authored-By
 `tests/notify.test.js`:
 ```js
 test("notify.yesMessage: counts attempts with the right plural", () => {
-  eq(App.notify.yesMessage(0), { title: "Shira said YES! 💕", message: "Didn't even try to say no 🥹" });
+  eq(App.notify.yesMessage(0), { title: "{HER} said YES! 💕", message: "Didn't even try to say no 🥹" });
   eq(App.notify.yesMessage(1).message, "After 1 no-attempt 😼");
   eq(App.notify.yesMessage(5).message, "After 5 no-attempts 😼");
 });
 
 test("notify.pickMessage: first pick vs changed pick", () => {
   const idea = { emoji: "🍿", title: "Movie night" };
-  eq(App.notify.pickMessage(idea, false), { title: "Shira picked a date! 🐾", message: "🍿 Movie night" });
-  eq(App.notify.pickMessage(idea, true), { title: "Shira changed her pick", message: "→ 🍿 Movie night" });
+  eq(App.notify.pickMessage(idea, false), { title: "{HER} picked a date! 🐾", message: "🍿 Movie night" });
+  eq(App.notify.pickMessage(idea, true), { title: "{HER} changed her pick", message: "→ 🍿 Movie night" });
 });
 
 test("notify.send: JSON body to the ntfy root, emoji safe (no custom headers)", () => {
   let call = null;
-  App.notify.send({ title: "Shira said YES! 💕", message: "hi" }, {
+  App.notify.send({ title: "{HER} said YES! 💕", message: "hi" }, {
     topic: "t-123",
     fetchFn: (url, opts) => { call = { url, opts }; return Promise.resolve(); },
   });
@@ -976,7 +976,7 @@ test("notify.send: JSON body to the ntfy root, emoji safe (no custom headers)", 
   eq(call.opts.keepalive, true);
   eq(call.opts.headers, undefined);
   eq(JSON.parse(call.opts.body), {
-    topic: "t-123", title: "Shira said YES! 💕", message: "hi", tags: ["cat", "heart"], priority: 4,
+    topic: "t-123", title: "{HER} said YES! 💕", message: "hi", tags: ["cat", "heart"], priority: 4,
   });
 });
 
@@ -1038,7 +1038,7 @@ window.App = window.App || {};
       });
       if (request && typeof request.catch === "function") request.catch(() => {});
     } catch (err) {
-      // Never bother Shira with errors.
+      // Never bother {HER} with errors.
     }
     return payload;
   }
@@ -1735,7 +1735,7 @@ Expected: `ALL 35 PASSED`.
 
 Run: `python3 tests/shot.py index.html "" 1500 1280x800` and `python3 tests/shot.py index.html "" 1500 375x667`, then Read both PNGs.
 Expected at both sizes:
-- Mochi is centred above "Shira, will you go on a date with me? 🐾" in Fredoka.
+- Mochi is centred above "{HER}, will you go on a date with me? 🐾" in Fredoka.
 - A pink YES with ears sits next to a grey No.
 - Nothing overflows sideways.
 
@@ -2385,16 +2385,16 @@ test("dates.renderDateCards: re-rendering (change my pick) allows a new pick", a
 
 test("dates.renderTicket: names, plan and approval", () => {
   const box = document.createElement("div");
-  App.dates.renderTicket(box, { herName: "Shira", fromName: "Sam", catName: "Mochi", idea: IDEAS[0] });
-  eq(box.querySelector(".ticket-names").textContent, "Shira + Sam");
+  App.dates.renderTicket(box, { herName: "{HER}", fromName: "Sam", catName: "Mochi", idea: IDEAS[0] });
+  eq(box.querySelector(".ticket-names").textContent, "{HER} + Sam");
   eq(box.querySelector(".ticket-plan b").textContent, "☕🐱 Cat café");
   eq(box.querySelector(".ticket-cat").textContent, "Mochi 🐾");
 });
 
 test("dates.renderTicket: empty or blank fromName becomes 'me'", () => {
   const box = document.createElement("div");
-  App.dates.renderTicket(box, { herName: "Shira", fromName: "  ", catName: "Mochi", idea: IDEAS[0] });
-  eq(box.querySelector(".ticket-names").textContent, "Shira + me");
+  App.dates.renderTicket(box, { herName: "{HER}", fromName: "  ", catName: "Mochi", idea: IDEAS[0] });
+  eq(box.querySelector(".ticket-names").textContent, "{HER} + me");
 });
 
 test("dates.renderTicket: names are text, never HTML", () => {
@@ -2745,14 +2745,14 @@ Expected: `ALL 41 PASSED`.
 Read each PNG:
 - `python3 tests/shot.py index.html "?screen=dates" 1500`: the heading and five cards in a grid.
 - `python3 tests/shot.py index.html "?screen=dates" 1500 375x667`: one column of cards, scrollable, with no sideways overflow.
-- `python3 tests/shot.py index.html "?screen=ticket" 1500`: a ticket with notches on both sides and a dashed border, "Shira + me", "Plan: ☕🐱 Cat café", "Approved by: Mochi 🐾", a paw stamp, the note, and "change my pick".
+- `python3 tests/shot.py index.html "?screen=ticket" 1500`: a ticket with notches on both sides and a dashed border, "{HER} + me", "Plan: ☕🐱 Cat café", "Approved by: Mochi 🐾", a paw stamp, the note, and "change my pick".
 
 - [ ] **Step 10: Manual end-to-end check, with real notifications**
 
 Subscribe to `CONFIG.ntfyTopic` in the ntfy app, or watch `https://ntfy.sh/<topic>` in a browser tab. Serve with `python3 -m http.server 8000` and open `http://localhost:8000/?test`.
-1. Click No twice, then YES. Both buttons pop, Mochi hops with ^ ^ eyes and hearts, cats rain down, and the headline reads "YAAAY!! I knew it, Shira 💕". A push arrives: "🧪 TEST Shira said YES! 💕" / "After 2 no-attempts 😼".
-2. After about 3s the cards appear. Hovering one tilts it and pops ears; clicking stamps a paw and the ticket appears. A push arrives: "🧪 TEST Shira picked a date! 🐾" / "☕🐱 Cat café" (or whatever was clicked).
-3. Click "change my pick" and pick another card. A push arrives: "🧪 TEST Shira changed her pick" / "→ 🍿 Movie night".
+1. Click No twice, then YES. Both buttons pop, Mochi hops with ^ ^ eyes and hearts, cats rain down, and the headline reads "YAAAY!! I knew it, {HER} 💕". A push arrives: "🧪 TEST {HER} said YES! 💕" / "After 2 no-attempts 😼".
+2. After about 3s the cards appear. Hovering one tilts it and pops ears; clicking stamps a paw and the ticket appears. A push arrives: "🧪 TEST {HER} picked a date! 🐾" / "☕🐱 Cat café" (or whatever was clicked).
+3. Click "change my pick" and pick another card. A push arrives: "🧪 TEST {HER} changed her pick" / "→ 🍿 Movie night".
 4. Reload with `?step=3&test` and click YES. Biscuit wakes up and hops too, and no paw, Biscuit or No button is left over on the date screen.
 
 Stop the server afterwards.
@@ -2774,17 +2774,17 @@ git commit -m "feat: YES celebration, date picker, ticket and notifications" -m 
 - [ ] **Step 1: Write `README.md`**
 
 ````markdown
-# A question for Shira 🐾
+# A question for {HER} 🐾
 
-A cat-themed "will you date me?" page. Mochi the cat guards the **No** button: she swats it, Biscuit sits on it, paws bat it around, and finally Mochi walks off with it and brings it back as "yes 💕". After YES, Shira picks a first date and your phone gets a push notification.
+A cat-themed "will you date me?" page. Mochi the cat guards the **No** button: she swats it, Biscuit sits on it, paws bat it around, and finally Mochi walks off with it and brings it back as "yes 💕". After YES, {HER} picks a first date and your phone gets a push notification.
 
 ## Open it
 Double-click `index.html`, or put the folder on any static host (GitHub Pages, Netlify Drop).
 
 ## Get the notifications (one-time)
 1. Install the **ntfy** app (Android / iOS).
-2. Subscribe to the topic in `js/config.js` (`ntfyTopic`, e.g. `shira-date-…`), on server `ntfy.sh`.
-3. You'll get "Shira said YES! 💕" (with how many times she tried No) and "Shira picked a date! 🐾".
+2. Subscribe to the topic in `js/config.js` (`ntfyTopic`, e.g. `{her}-date-…`), on server `ntfy.sh`.
+3. You'll get "{HER} said YES! 💕" (with how many times she tried No) and "{HER} picked a date! 🐾".
 
 ## Edit
 Everything you might want to change is in `js/config.js`: your name (`fromName`, shown on the ticket), all text, the five No tricks' captions, and the date ideas.
@@ -2797,7 +2797,7 @@ Everything you might want to change is in `js/config.js`: your name (`fromName`,
 | `?step=N` | Start as if No was tried N times (0–5) |
 | `?screen=dates` / `?screen=ticket` | Jump to the date picker / ticket |
 
-**Don't send Shira a link with `?test` in it.**
+**Don't send {HER} a link with `?test` in it.**
 
 ## Tests
 `python3 tests/run.py` runs the unit tests in headless Chrome.

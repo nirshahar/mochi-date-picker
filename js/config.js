@@ -3,18 +3,20 @@ window.App = window.App || {};
 
 const CONFIG = (() => {
   const HER = "Shira";
+  const ME = "Nir"; // shown on the date ticket; empty → "me"
   const CAT = "Mochi";
   const SITTER = "Biscuit";
 
   return {
     herName: HER,
-    fromName: "Nir", // your name, shown on the date ticket; empty → "me"
+    fromName: ME,
     catName: CAT,
     sittingCatName: SITTER,
     // Secret ntfy.sh topic: subscribe to it in the ntfy app to get the notifications.
     ntfyTopic: "shira-date-d371b01f36fbcfff",
 
     text: {
+      pageTitle: `A question for ${HER} 🐾`,
       question: `${HER}, will you go on a date with me? 🐾`,
       yes: "YES",
       no: "No",

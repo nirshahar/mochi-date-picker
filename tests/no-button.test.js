@@ -1,6 +1,6 @@
 // Drives the real No-button controller on a small fixture page. Web Animations never finish under
 // headless virtual time, so a step "hangs" at its first animation — which is exactly the moment
-// Shira might click YES mid-trick.
+// she might click YES mid-trick.
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function noButtonFixture() {

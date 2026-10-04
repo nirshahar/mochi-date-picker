@@ -44,16 +44,16 @@ test("dates.renderDateCards: re-rendering (change my pick) allows a new pick", a
 
 test("dates.renderTicket: names, plan and approval", () => {
   const box = document.createElement("div");
-  App.dates.renderTicket(box, { herName: "Shira", fromName: "Sam", catName: "Mochi", idea: IDEAS[0] });
-  eq(box.querySelector(".ticket-names").textContent, "Shira + Sam");
+  App.dates.renderTicket(box, { herName: "Her", fromName: "Me", catName: "Mochi", idea: IDEAS[0] });
+  eq(box.querySelector(".ticket-names").textContent, "Her + Me");
   eq(box.querySelector(".ticket-plan b").textContent, "☕🐱 Cat café");
   eq(box.querySelector(".ticket-cat").textContent, "Mochi 🐾");
 });
 
 test("dates.renderTicket: empty or blank fromName becomes 'me'", () => {
   const box = document.createElement("div");
-  App.dates.renderTicket(box, { herName: "Shira", fromName: "  ", catName: "Mochi", idea: IDEAS[0] });
-  eq(box.querySelector(".ticket-names").textContent, "Shira + me");
+  App.dates.renderTicket(box, { herName: "Her", fromName: "  ", catName: "Mochi", idea: IDEAS[0] });
+  eq(box.querySelector(".ticket-names").textContent, "Her + me");
 });
 
 test("dates.renderTicket: names are text, never HTML", () => {

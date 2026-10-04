@@ -56,6 +56,7 @@ window.App = window.App || {};
     const onPhone = window.matchMedia("(pointer: coarse)").matches;
     App.notify.send(App.notify.openMessage(onPhone), { test: params.test });
 
+    document.title = T.pageTitle;
     $("question-title").textContent = T.question;
     $("yes-btn").textContent = T.yes;
     $("no-btn").textContent = T.no;

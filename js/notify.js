@@ -43,7 +43,7 @@ window.App = window.App || {};
       });
       if (request && typeof request.catch === "function") request.catch(() => {});
     } catch (err) {
-      // Never bother Shira with errors.
+      // Never show her an error.
     }
     return payload;
   }

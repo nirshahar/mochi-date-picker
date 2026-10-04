@@ -1,7 +1,7 @@
-# "Will You Date Me, Shira?" — Cat-themed site
+# "Will You Date Me, {HER}?" — Cat-themed site
 
 ## Context
-A playful "will you date me" page for Shira, based on the trend where the "No" button misbehaves. Here the twist is about cats: **Mochi the cat guards the "No" button.** She swats it, sits on it, bats it around, and finally walks off with it, the way cats knock things off tables. After YES, Shira picks a first-date idea and the site **pushes a notification to your phone** automatically.
+A playful "will you date me" page for {HER}, based on the trend where the "No" button misbehaves. Here the twist is about cats: **Mochi the cat guards the "No" button.** She swats it, sits on it, bats it around, and finally walks off with it, the way cats knock things off tables. After YES, {HER} picks a first-date idea and the site **pushes a notification to your phone** automatically.
 
 The project folder (`/mnt/c/Users/hihia/Desktop/WillYouDateMe`) is empty, so everything here is new.
 
@@ -12,7 +12,7 @@ The project folder (`/mnt/c/Users/hihia/Desktop/WillYouDateMe`) is empty, so eve
 - After YES: a celebration, then a date-idea picker, then an "official date ticket" card.
 - Notifications use **ntfy.sh push**, with no backend. Events: **she said YES** and **she picked a date**.
 
-**Success:** Shira laughs her way through the No attempts, clicks YES, picks a date, and your phone buzzes with her choice.
+**Success:** {HER} laughs her way through the No attempts, clicks YES, picks a date, and your phone buzzes with her choice.
 
 ## Approach
 A static site: HTML, CSS and vanilla JS, with no framework, build step or backend. Scripts are classic `<script>` tags, so double-clicking `index.html` works, and the folder can go on GitHub Pages or Netlify Drop as is (hosting is decided at the end). The cats are hand-made **inline SVGs** with state classes for their expressions, so there are no image assets. Animations are CSS keyframes plus small JS helpers. The font is Fredoka from Google Fonts.
@@ -36,11 +36,11 @@ js/main.js          – screen switching, debug URL params, wiring
 `js/config.js`, the only file you'd need to edit:
 ```js
 const CONFIG = {
-  herName: "Shira",
+  herName: "{HER}",
   fromName: "",                 // your name; empty → "me"
   catName: "Mochi",             // the guard cat
   sittingCatName: "Biscuit",    // the chubby one from step 3
-  ntfyTopic: "shira-date-<random-16-chars>",   // generated at build time
+  ntfyTopic: "{her}-date-<random-16-chars>",   // generated at build time
   attempts: [ /* noLabel + caption per step, see table */ ],
   dateIdeas: [ /* emoji, title, blurb */ ],
 };
@@ -48,9 +48,9 @@ const CONFIG = {
 
 ## Screen 1: the question
 
-**Layout:** Mochi, a cream-and-orange tabby SVG, sits beside the headline **"Shira, will you go on a date with me? 🐾"**. Below are **YES** (pink, with two little cat ears on top) and **No** (plain grey). A caption line under the buttons starts empty.
+**Layout:** Mochi, a cream-and-orange tabby SVG, sits beside the headline **"{HER}, will you go on a date with me? 🐾"**. Below are **YES** (pink, with two little cat ears on top) and **No** (plain grey). A caption line under the buttons starts empty.
 
-**Ambient life:** Mochi blinks at random every 3–6 seconds and slowly swishes her tail. If Shira clicks Mochi herself, she purrs: a "purr~" bubble appears and a heart floats up (an easter egg).
+**Ambient life:** Mochi blinks at random every 3–6 seconds and slowly swishes her tail. If {HER} clicks Mochi herself, she purrs: a "purr~" bubble appears and a heart floats up (an easter egg).
 
 **Hover tease (desktop only, before each attempt):** when the pointer comes near No, Mochi's eyes narrow into suspicious slits and follow the cursor, and a paw peeks about 30px in from the nearest screen edge and wiggles. When the pointer moves away, the paw pulls back and her eyes relax. Touch screens skip this part, and everything else still works.
 
@@ -73,8 +73,8 @@ After step 5, both buttons mean YES. Clicking the former No button triggers the 
 **On YES:**
 - Both buttons pop like bubbles. Mochi does a happy hop with ^ ^ eyes, hearts rise from her, and Biscuit (if he's there) wakes up and hops too.
 - **Cat rain:** about 40 falling cat faces in 4 fur colours, paw prints and hearts, each with a random x position, rotation and duration of 2–4s. They're DOM elements with CSS animations and are removed when the animation ends.
-- Headline: **"YAAAY!! I knew it, Shira 💕"**. Sub-line: "Mochi approves. (She never approves of anything.)"
-- 🔔 Notification sent: **"Shira said YES! 💕"**, body "After 3 no-attempts 😼". With 0 attempts it says "Didn't even try to say no 🥹".
+- Headline: **"YAAAY!! I knew it, {HER} 💕"**. Sub-line: "Mochi approves. (She never approves of anything.)"
+- 🔔 Notification sent: **"{HER} said YES! 💕"**, body "After 3 no-attempts 😼". With 0 attempts it says "Didn't even try to say no 🥹".
 - After about 3s the date picker fades in.
 
 **Date picker:** the heading is "Okay, now the important part… pick our first date 😽". Cards sit in a grid (one column on narrow screens):
@@ -89,17 +89,17 @@ When the pointer is over a card, it tilts slightly and two cat ears pop up on it
 ## Screen 3: the date ticket
 A ticket-style card with a perforated edge:
 > 🎟️ **OFFICIAL DATE TICKET**: admits two
-> **Shira + {fromName or "me"}**
+> **{HER} + {fromName or "me"}**
 > Plan: ☕🐱 Cat café
 > Approved by: Mochi 🐾 *(paw-print stamp)*
 
 Under the ticket: "Screenshot this and send it to me 😽 …actually, Mochi already told me." This is honest about the automatic notification, and it's a cute reveal. A small "change my pick" link goes back to the cards.
 
-🔔 Notification sent: **"Shira picked a date! 🐾"**, body "☕🐱 Cat café". If she changes her pick: title "Shira changed her pick", body "→ 🍿 Movie night".
+🔔 Notification sent: **"{HER} picked a date! 🐾"**, body "☕🐱 Cat café". If she changes her pick: title "{HER} changed her pick", body "→ 🍿 Movie night".
 
 ## Notifications (ntfy.sh)
 - `notify.js` POSTs a JSON body `{ topic, title, message, tags: ["cat","heart"], priority: 4 }` to `https://ntfy.sh/` with `mode: "no-cors"` and `keepalive: true`. It uses the JSON body because emoji aren't allowed in HTTP header values, and `fetch` throws if you try. Plain text with no custom headers makes this a "simple" request, so there's no CORS preflight.
-- It's fire-and-forget: failures are swallowed silently, so Shira never sees an error.
+- It's fire-and-forget: failures are swallowed silently, so {HER} never sees an error.
 - The YES notification is sent at most once per page load.
 - **Test mode:** adding `?test` to the URL puts "🧪 TEST" in front of every notification title, so you can tell your own test runs from the real thing.
 - **Your one-time setup:** install the ntfy app (Android/iOS) and subscribe to the topic from `config.js`. I'll generate a long random topic name so nobody can guess it. It is still visible in the page source, which is the accepted tradeoff.
@@ -119,7 +119,7 @@ Under the ticket: "Screenshot this and send it to me 😽 …actually, Mochi alr
 ## Verification
 1. Serve locally with `python3 -m http.server` (Node isn't installed) and open `http://localhost:8000/?test`.
 2. Go through all 5 No steps and check each animation, label and caption. Check that No never leaves the screen or overlaps YES, Mochi or Biscuit, and that spam-clicking during an animation does nothing. Check that Tab + Enter on No triggers a swat.
-3. Click YES and confirm the cat rain, the "🧪 TEST Shira said YES" push on your phone with the right attempt count, the date picker, the ticket and a second push. Then change the pick and confirm a third push.
+3. Click YES and confirm the cat rain, the "🧪 TEST {HER} said YES" push on your phone with the right attempt count, the date picker, the ticket and a second push. Then change the pick and confirm a third push.
 4. Use `?step=4` and `?screen=dates` to re-check individual parts.
 5. Check at a phone width in Chrome DevTools device mode: tapping No triggers the swat and the layout doesn't break.
 6. No console errors in Chrome and Firefox.
