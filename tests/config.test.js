@@ -24,3 +24,7 @@ test("config: the question is addressed to her", () => {
 test("config: the page title is addressed to her", () => {
   eq(CONFIG.text.pageTitle, `A question for ${CONFIG.herName} 🐾`);
 });
+
+test("config: a secret link key is set", () => {
+  assert(/^[0-9a-f]{12}$/.test(CONFIG.linkKey), CONFIG.linkKey);
+});

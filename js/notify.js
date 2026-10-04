@@ -2,6 +2,13 @@
 window.App = window.App || {};
 
 (function () {
+  // "real" for the secret link, "test" while previewing (?test etc.), "off" for everyone else.
+  function deliveryMode({ test, hash, linkKey }) {
+    if (test) return "test";
+    if (!linkKey || hash === `#${linkKey}`) return "real";
+    return "off";
+  }
+
   function openMessage(onPhone) {
     return {
       title: `👀 ${CONFIG.herName} just opened the page`,
@@ -48,5 +55,5 @@ window.App = window.App || {};
     return payload;
   }
 
-  App.notify = { openMessage, yesMessage, pickMessage, send };
+  App.notify = { deliveryMode, openMessage, yesMessage, pickMessage, send };
 })();

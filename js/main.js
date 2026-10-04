@@ -53,8 +53,14 @@ window.App = window.App || {};
     const $ = (id) => document.getElementById(id);
     const T = CONFIG.text;
 
-    const onPhone = window.matchMedia("(pointer: coarse)").matches;
-    App.notify.send(App.notify.openMessage(onPhone), { test: params.test });
+    const mode = App.notify.deliveryMode({ test: params.test, hash: window.location.hash, linkKey: CONFIG.linkKey });
+    const notify = (msg) => { if (mode !== "off") App.notify.send(msg, { test: mode === "test" }); };
+    // "Opened" only counts for a person: not a bot, and only once they move, tap, scroll or type.
+    if (!App.visitor.looksLikeBot(window.navigator)) {
+      App.visitor.onFirstHumanInput(window, () => {
+        notify(App.notify.openMessage(window.matchMedia("(pointer: coarse)").matches));
+      });
+    }
 
     document.title = T.pageTitle;
     $("question-title").textContent = T.question;
@@ -80,7 +86,7 @@ window.App = window.App || {};
     function showDays(idea) {
       const days = App.dates.upcomingDays(new Date(), CONFIG.dayCount);
       App.dates.renderDayCards($("day-cards"), days, (day) => {
-        App.notify.send(App.notify.pickMessage(idea, day, hasPicked), { test: params.test });
+        notify(App.notify.pickMessage(idea, day, hasPicked));
         hasPicked = true;
         showTicket(idea, day);
       });
@@ -94,7 +100,7 @@ window.App = window.App || {};
 
     const onYes = App.fx.once(async () => {
       noCtl.deactivate();
-      App.notify.send(App.notify.yesMessage(noCtl.escalation.count), { test: params.test });
+      notify(App.notify.yesMessage(noCtl.escalation.count));
       await App.celebrate({
         yesBtn: $("yes-btn"), noBtn: $("no-btn"), mochiEl, biscuit: noCtl.biscuit,
         titleEl: $("question-title"), subEl: $("yay-sub"), captionEl: $("caption"),

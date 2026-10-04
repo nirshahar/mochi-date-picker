@@ -14,6 +14,10 @@ const CONFIG = (() => {
     sittingCatName: SITTER,
     // Secret ntfy.sh topic: subscribe to it in the ntfy app to get the notifications.
     ntfyTopic: "shira-date-d371b01f36fbcfff",
+    // Only visits through the link ending in #<linkKey> notify you (the one you send her).
+    // Visits without it stay silent, so scrapers that find the bare URL can't ping you.
+    // Use ?test to try it yourself. Set to "" to notify on every visit.
+    linkKey: "de94e7ad48fa",
 
     text: {
       pageTitle: `A question for ${HER} 🐾`,

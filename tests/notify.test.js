@@ -44,3 +44,15 @@ test("notify.openMessage: says she opened the page, and on what", () => {
   eq(App.notify.openMessage(true), { title: `👀 ${CONFIG.herName} just opened the page`, message: "on a phone" });
   eq(App.notify.openMessage(false).message, "on a computer");
 });
+
+test("notify.deliveryMode: only the secret link sends real pushes", () => {
+  eq(App.notify.deliveryMode({ test: false, hash: "#abc123", linkKey: "abc123" }), "real");
+  eq(App.notify.deliveryMode({ test: false, hash: "", linkKey: "abc123" }), "off", "bare URL");
+  eq(App.notify.deliveryMode({ test: false, hash: "#nope", linkKey: "abc123" }), "off", "wrong key");
+});
+
+test("notify.deliveryMode: test/preview mode always sends (marked TEST); no key configured = always real", () => {
+  eq(App.notify.deliveryMode({ test: true, hash: "", linkKey: "abc123" }), "test");
+  eq(App.notify.deliveryMode({ test: true, hash: "#abc123", linkKey: "abc123" }), "test");
+  eq(App.notify.deliveryMode({ test: false, hash: "", linkKey: "" }), "real");
+});

@@ -7,10 +7,19 @@ All names live in `js/config.js`: `HER` (who's being asked) and `ME` (you, shown
 ## Open it
 Double-click `index.html`, or put the folder on any static host (GitHub Pages, Netlify Drop). No build step.
 
+## Send her the secret link
+Notifications only come from visits through the link that ends in `#` + `linkKey` from `js/config.js`:
+
+```
+https://<your-user>.github.io/<repo>/#<linkKey>
+```
+
+Visits to the bare URL (scrapers, people browsing the repo) never notify you. With `?test` or any preview param they still do, marked 🧪 TEST, so you can try it yourself. On top of that, the "opened the page" push waits for a real person (a mouse move, tap, scroll or key press) and skips bots and headless browsers, and the page asks search engines not to index it. Set `linkKey` to `""` to notify on every visit.
+
 ## Get the notifications (one-time)
 1. Install the **ntfy** app (Android / iOS).
 2. Subscribe to the topic in `js/config.js` (`ntfyTopic`), on server `ntfy.sh`.
-3. You'll get "👀 {HER} just opened the page" (on a phone / on a computer) every time the page loads, then "{HER} said YES! 💕" (with how many times she tried No) and "{HER} picked a date! 🐾" with the idea and the day (plus "changed her pick" if she does).
+3. You'll get "👀 {HER} just opened the page" (on a phone / on a computer) once she starts interacting, then "{HER} said YES! 💕" (with how many times she tried No) and "{HER} picked a date! 🐾" with the idea and the day (plus "changed her pick" if she does).
 
 When you first subscribe you may see a few "🧪 TEST" messages: those are from testing the page.
 
