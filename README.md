@@ -18,7 +18,7 @@ Everything you might want to change is in `js/config.js`: your name (`fromName`,
 ## Preview / debug (add to the URL)
 | Param | What it does |
 |-------|--------------|
-| `?test` | Notifications get a "🧪 TEST" prefix, so you can tell your test runs apart |
+| `?test` | Notifications get a "🧪 TEST" prefix, so you can tell your test runs apart (any of the params below turns this on too) |
 | `?demo` | Mochi performs all five tricks by herself |
 | `?step=N` | Start as if No was tried N times (0–5) |
 | `?screen=dates` / `?screen=ticket` | Jump to the date picker / ticket |

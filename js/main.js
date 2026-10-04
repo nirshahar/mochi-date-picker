@@ -6,7 +6,9 @@ window.App = window.App || {};
     const p = new URLSearchParams(search);
     const step = Math.max(0, Math.min(CONFIG.attempts.length, parseInt(p.get("step"), 10) || 0));
     const screen = ["dates", "ticket"].includes(p.get("screen")) ? p.get("screen") : null;
-    return { test: p.has("test"), step, screen, demo: p.has("demo") };
+    // Any debug param means someone is previewing, so its notifications are marked TEST too.
+    const test = ["test", "demo", "step", "screen"].some((name) => p.has(name));
+    return { test, step, screen, demo: p.has("demo") };
   }
 
   function showScreen(name) {
@@ -22,6 +24,19 @@ window.App = window.App || {};
         startBlinking(svg);
       }, 140);
     }, 3000 + Math.random() * 3000);
+  }
+
+  // Petting Mochi makes her purr (unless she's busy being dramatic).
+  function setupPurr(mochiEl, text) {
+    const svg = mochiEl.querySelector("svg");
+    const celebrating = () => mochiEl.classList.contains("hop");
+    mochiEl.addEventListener("click", () => {
+      if (svg.dataset.mood) return;
+      App.fx.bubble(text, App.fx.rectOf(mochiEl));
+      App.fx.floatHeart(App.fx.rectOf(mochiEl));
+      svg.dataset.mood = "happy";
+      setTimeout(() => { if (svg.dataset.mood === "happy" && !celebrating()) svg.dataset.mood = ""; }, 1200);
+    });
   }
 
   // ?demo: Mochi performs every trick by herself (handy for previewing).
@@ -47,15 +62,8 @@ window.App = window.App || {};
 
     const mochiEl = $("mochi");
     mochiEl.innerHTML = App.cats.mochi();
-    const mochiSvg = mochiEl.querySelector("svg");
-    startBlinking(mochiSvg);
-    mochiEl.addEventListener("click", () => {
-      if (mochiSvg.dataset.mood) return; // busy being dramatic
-      App.fx.bubble(T.purr, App.fx.rectOf(mochiEl));
-      App.fx.floatHeart(App.fx.rectOf(mochiEl));
-      mochiSvg.dataset.mood = "happy";
-      setTimeout(() => { if (mochiSvg.dataset.mood === "happy") mochiSvg.dataset.mood = ""; }, 1200);
-    });
+    startBlinking(mochiEl.querySelector("svg"));
+    setupPurr(mochiEl, T.purr);
 
     let hasPicked = false;
     function showTicket(idea) {
@@ -98,5 +106,6 @@ window.App = window.App || {};
 
   App.parseParams = parseParams;
   App.showScreen = showScreen;
+  App.setupPurr = setupPurr;
   if (document.getElementById("app")) init();
 })();

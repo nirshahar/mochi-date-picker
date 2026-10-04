@@ -57,3 +57,16 @@ test("escalation: skipTo settles earlier steps instantly and clamps", () => {
   eq(esc.count, 3);
   eq(esc.converted, true);
 });
+
+test("escalation: convert() mid-step makes the button a YES right away (no dead taps)", async () => {
+  const log = [];
+  let conversions = 0;
+  const steps = fakeSteps(1, log);
+  const esc = App.createEscalation({ steps, onConverted: () => { conversions += 1; } });
+  steps[0].play = () => new Promise((resolve) => { esc.convert(); setTimeout(resolve, 20); });
+  const running = esc.attempt();
+  eq(esc.converted, true, "converted while the step is still playing");
+  eq(esc.busy, true);
+  await running;
+  eq(conversions, 1, "onConverted fires once");
+});

@@ -11,12 +11,18 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
   let moodTimer = null;
   let teasePaw = null;
 
+  // Once YES is clicked a trick may still be mid-animation. Every await in the tricks goes through
+  // live(), which never resolves after deactivate(), so a frozen trick can't touch the celebration.
+  const live = (promise) => promise.then((value) => (active ? value : new Promise(() => {})));
+
   // ---------- shared helpers ----------
   function setMood(mood) {
+    if (!active) return;
     clearTimeout(moodTimer);
     mochiSvg().dataset.mood = mood;
   }
   function moodFor(mood, ms) {
+    if (!active) return;
     setMood(mood);
     moodTimer = setTimeout(() => setMood(""), ms);
   }
@@ -64,7 +70,7 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
     const edge = geo.nearestEdge(r, fx.viewport());
     const point = geo.contactPoint(r, edge);
     const strike = fx.pawStrike(point, edge);
-    await strike.contact;
+    await live(strike.contact);
     fx.burst(burstText, point);
     return { edge, done: strike.done };
   }
@@ -76,16 +82,16 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
       { transform: "translate(0px, 0px) rotate(0deg)" },
       { transform: `translate(${push.x * far}px, ${push.y * far - 120}px) rotate(720deg)` },
     ], { duration: 520, easing: "cubic-bezier(.3,.6,.5,1)", fill: "forwards" });
-    await off.finished;
+    await live(off.finished);
     const dest = spot();
     off.cancel();
     fx.placeAt(noBtn, dest);
-    await noBtn.animate([
+    await live(noBtn.animate([
       { transform: `translateY(${-(dest.y + 140)}px)`, easing: "cubic-bezier(.5,0,1,.6)" },
       { transform: "translateY(0px)", offset: 0.65, easing: "ease-out" },
       { transform: "translateY(-16px)", offset: 0.82, easing: "ease-in" },
       { transform: "translateY(0px)" },
-    ], { duration: 650 }).finished;
+    ], { duration: 650 }).finished);
   }
 
   function wobble() {
@@ -121,7 +127,11 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
   }
 
   function cleanupWalker() {
-    if (noBtn.parentElement !== fx.stage()) fx.stage().appendChild(noBtn);
+    if (noBtn.classList.contains("carried")) { // drop it right where it is on screen
+      const r = fx.rectOf(noBtn);
+      fx.stage().appendChild(noBtn);
+      fx.placeAt(noBtn, r);
+    }
     noBtn.classList.remove("carried");
     fx.stage().querySelectorAll(".walker").forEach((w) => w.remove());
     mochiEl.style.visibility = "";
@@ -131,11 +141,11 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
   const steps = [
     { // 1. The Swat
       async play() {
-        const { edge } = await strikeNo("SWAT!");
+        const { edge } = await live(strikeNo("SWAT!"));
         detach(); // only now, so YES re-centres while No is already flying
         applyState(1);
         moodFor("smug", 1600);
-        await flyOffAndDrop(edge);
+        await live(flyOffAndDrop(edge));
       },
       settle() {
         detach();
@@ -147,14 +157,14 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
       async play() {
         setMood("alarmed");
         fx.bubble(CONFIG.text.mrrp, fx.rectOf(mochiEl));
-        await fx.wait(650);
-        const first = await strikeNo("tap");
-        await wobble();
-        await first.done;
-        const { edge } = await strikeNo("SWAT!!");
+        await live(fx.wait(650));
+        const first = await live(strikeNo("tap"));
+        await live(wobble());
+        await live(first.done);
+        const { edge } = await live(strikeNo("SWAT!!"));
         applyState(2);
         moodFor("smug", 1600);
-        await flyOffAndDrop(edge);
+        await live(flyOffAndDrop(edge));
       },
       settle() {
         setMood("");
@@ -169,29 +179,29 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
         const at = geo.clampToViewport(
           { x: r.x + r.w / 2 - size.w / 2, y: r.y + r.h / 2 - size.h * 0.6 }, size, fx.viewport());
         biscuit = makeBiscuit(size, at);
-        await biscuit.animate([
+        await live(biscuit.animate([
           { transform: `translateY(${-(at.y + size.h + 60)}px)` },
           { transform: "translateY(0px)" },
-        ], { duration: 460, easing: "cubic-bezier(.55,0,1,.45)" }).finished;
+        ], { duration: 460, easing: "cubic-bezier(.55,0,1,.45)" }).finished);
         biscuit.animate([{ transform: "scale(1.15, 0.8)" }, { transform: "scale(1, 1)" }],
           { duration: 280, easing: "ease-out" });
         fx.burst("THUD!", { x: at.x + size.w / 2, y: at.y });
         fx.shake(appEl);
         applyState(3);
         biscuit.classList.add("sleeping");
-        await fx.wait(1200);
+        await live(fx.wait(1200));
         // squeeze out on the roomier side, then scoot away leaving paw prints
-        await noBtn.animate([
+        await live(noBtn.animate([
           { transform: "scale(1, 1)" }, { transform: "scale(0.55, 1.35)" }, { transform: "scale(1, 1)" },
-        ], { duration: 380 }).finished;
+        ], { duration: 380 }).finished);
         const goRight = r.x + r.w / 2 < window.innerWidth / 2;
         const out = { x: goRight ? at.x + size.w + 8 : at.x - noBtn.offsetWidth - 8, y: fx.posOf(noBtn).y };
-        await fx.glide(noBtn, geo.clampToViewport(out, fx.sizeOf(noBtn), fx.viewport()),
-          { duration: 260, easing: "ease-out" });
+        await live(fx.glide(noBtn, geo.clampToViewport(out, fx.sizeOf(noBtn), fx.viewport()),
+          { duration: 260, easing: "ease-out" }));
         const dest = spot();
         const centre = (p) => ({ x: p.x + noBtn.offsetWidth / 2, y: p.y + noBtn.offsetHeight / 2 });
         fx.pawTrail(centre(fx.posOf(noBtn)), centre(dest));
-        await fx.glide(noBtn, dest, { duration: 800 });
+        await live(fx.glide(noBtn, dest, { duration: 800 }));
       },
       settle() {
         if (!biscuit) {
@@ -210,26 +220,26 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
         const y = Math.min(Math.max(fx.posOf(noBtn).y, 90), vp.vh - size.h - 90);
         const leftSpot = { x: 64, y };
         const rightSpot = { x: vp.vw - size.w - 64, y };
-        await fx.glide(noBtn, leftSpot, { duration: 320, easing: "ease-in" });
+        await live(fx.glide(noBtn, leftSpot, { duration: 320, easing: "ease-in" }));
         let atLeft = true;
         for (let i = 0; i < 3; i++) {
           const edge = atLeft ? "left" : "right";
           const point = geo.contactPoint(fx.rectOf(noBtn), edge);
           const strike = fx.pawStrike(point, edge, { duration: 520 });
-          await strike.contact;
+          await live(strike.contact);
           fx.burst("pat!", point);
-          await fx.glide(noBtn, atLeft ? rightSpot : leftSpot,
-            { duration: 420, spin: atLeft ? 360 : -360, arc: 50 });
+          await live(fx.glide(noBtn, atLeft ? rightSpot : leftSpot,
+            { duration: 420, spin: atLeft ? 360 : -360, arc: 50 }));
           atLeft = !atLeft;
         }
         const edge = atLeft ? "left" : "right";
         const point = geo.contactPoint(fx.rectOf(noBtn), edge);
         const strike = fx.pawStrike(point, edge);
-        await strike.contact;
+        await live(strike.contact);
         fx.burst("BONK!", point);
         applyState(4);
         const corner = geo.safeCorner(fx.sizeOf(noBtn), fx.viewport(), obstacles());
-        await fx.glide(noBtn, corner, { duration: 560, easing: "cubic-bezier(.2,.7,.3,1)", spin: 540, arc: 90 });
+        await live(fx.glide(noBtn, corner, { duration: 560, easing: "cubic-bezier(.2,.7,.3,1)", spin: 540, arc: 90 }));
       },
       settle() {
         applyState(4, { caption: false });
@@ -253,30 +263,31 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
         const mouth = { x: home.w * 0.5, y: home.h * 0.5 }; // Mochi's mouth, inside the walker
         const hold = () => ({ x: mouth.x - noBtn.offsetWidth / 2, y: mouth.y - 4 });
         const r = fx.rectOf(noBtn);
-        await walkTo(walker, { x: r.x + r.w / 2 - mouth.x, y: r.y - mouth.y + 4 });
+        await live(walkTo(walker, { x: r.x + r.w / 2 - mouth.x, y: r.y - mouth.y + 4 }));
 
         body.appendChild(noBtn); // picked up!
         noBtn.classList.add("carried");
         fx.placeAt(noBtn, hold());
         const vw = window.innerWidth;
         const exitRight = fx.posOf(walker).x + home.w / 2 > vw / 2;
-        await walkTo(walker, { x: exitRight ? vw + 40 : -home.w - 40, y: fx.posOf(walker).y });
+        await live(walkTo(walker, { x: exitRight ? vw + 40 : -home.w - 40, y: fx.posOf(walker).y }));
         fx.setCaption(captionEl, CONFIG.text.leftChat);
-        await fx.wait(2000);
+        await live(fx.wait(2000));
 
         applyState(5, { caption: false }); // the button comes back… edited
         fx.placeAt(noBtn, hold());
         const dest = spot();
         walkerSvg.dataset.mood = "happy";
         fx.placeAt(walker, { x: exitRight ? -home.w - 40 : vw + 40, y: dest.y - mouth.y + 4 });
-        await walkTo(walker, { x: dest.x + noBtn.offsetWidth / 2 - mouth.x, y: dest.y - mouth.y + 4 });
+        await live(walkTo(walker, { x: dest.x + noBtn.offsetWidth / 2 - mouth.x, y: dest.y - mouth.y + 4 }));
 
         fx.stage().appendChild(noBtn); // dropped
         noBtn.classList.remove("carried");
         fx.placeAt(noBtn, dest);
+        esc.convert(); // "yes 💕" works from this moment, not only once Mochi is home
         fx.setCaption(captionEl, CONFIG.attempts[4].caption);
         walkerSvg.dataset.mood = "smug";
-        await walkTo(walker, home);
+        await live(walkTo(walker, home));
         walker.remove();
         mochiEl.style.visibility = "";
       },
@@ -360,9 +371,13 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
   return {
     escalation: esc,
     skipTo: (n) => esc.skipTo(n),
+    // YES was clicked: freeze any running trick and clear what it left lying around.
     deactivate() {
-      active = false;
       stopTease();
+      active = false;
+      clearTimeout(moodTimer);
+      fx.stage().querySelectorAll(".paw-wrap, .burst, .bubble, .trail-print").forEach((el) => el.remove());
+      if (fx.stage().querySelector(".walker")) cleanupWalker();
     },
     get biscuit() { return biscuit; },
   };

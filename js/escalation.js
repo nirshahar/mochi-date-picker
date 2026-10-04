@@ -6,11 +6,14 @@ App.createEscalation = function ({ steps, onConverted = () => {} }) {
   let busy = false;
   let converted = false;
 
+  function markConverted() {
+    if (converted) return;
+    converted = true;
+    onConverted();
+  }
+
   function checkConverted() {
-    if (!converted && count >= steps.length) {
-      converted = true;
-      onConverted();
-    }
+    if (count >= steps.length) markConverted();
   }
 
   return {
@@ -34,6 +37,11 @@ App.createEscalation = function ({ steps, onConverted = () => {} }) {
       }
       checkConverted();
       return true;
+    },
+
+    // Lets a step turn the button into a YES before its animation has finished.
+    convert() {
+      markConverted();
     },
 
     // Jumps straight to the end state of the first n steps (debug ?step=N).
