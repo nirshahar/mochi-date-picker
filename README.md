@@ -8,7 +8,7 @@ Double-click `index.html`, or put the folder on any static host (GitHub Pages, N
 ## Get the notifications (one-time)
 1. Install the **ntfy** app (Android / iOS).
 2. Subscribe to the topic `shira-date-d371b01f36fbcfff` (server `ntfy.sh`), which is `ntfyTopic` in `js/config.js`.
-3. You'll get "Shira said YES! 💕" (with how many times she tried No) and "Shira picked a date! 🐾" (plus "changed her pick" if she does).
+3. You'll get "👀 Shira just opened the page" (on a phone / on a computer) every time the page loads, then "Shira said YES! 💕" (with how many times she tried No) and "Shira picked a date! 🐾" (plus "changed her pick" if she does).
 
 When you first subscribe you may see a few "🧪 TEST" messages: those are from testing the page.
 

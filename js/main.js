@@ -53,6 +53,9 @@ window.App = window.App || {};
     const $ = (id) => document.getElementById(id);
     const T = CONFIG.text;
 
+    const onPhone = window.matchMedia("(pointer: coarse)").matches;
+    App.notify.send(App.notify.openMessage(onPhone), { test: params.test });
+
     $("question-title").textContent = T.question;
     $("yes-btn").textContent = T.yes;
     $("no-btn").textContent = T.no;

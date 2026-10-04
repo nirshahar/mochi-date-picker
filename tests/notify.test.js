@@ -36,3 +36,8 @@ test("notify.send: network failures never escape", async () => {
   App.notify.send({ title: "x", message: "y" }, { fetchFn: () => Promise.reject(new TypeError("offline")) });
   await new Promise((r) => setTimeout(r, 10)); // an unhandled rejection would be reported as a FAIL
 });
+
+test("notify.openMessage: says Shira opened the page, and on what", () => {
+  eq(App.notify.openMessage(true), { title: "👀 Shira just opened the page", message: "on a phone" });
+  eq(App.notify.openMessage(false).message, "on a computer");
+});

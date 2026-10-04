@@ -2,6 +2,13 @@
 window.App = window.App || {};
 
 (function () {
+  function openMessage(onPhone) {
+    return {
+      title: `👀 ${CONFIG.herName} just opened the page`,
+      message: onPhone ? "on a phone" : "on a computer",
+    };
+  }
+
   function yesMessage(attempts) {
     const plural = attempts === 1 ? "no-attempt" : "no-attempts";
     return {
@@ -41,5 +48,5 @@ window.App = window.App || {};
     return payload;
   }
 
-  App.notify = { yesMessage, pickMessage, send };
+  App.notify = { openMessage, yesMessage, pickMessage, send };
 })();
