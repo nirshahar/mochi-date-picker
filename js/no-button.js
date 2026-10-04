@@ -95,6 +95,38 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
     ], { duration: 380 }).finished;
   }
 
+  // ---------- Biscuit (step 3) ----------
+  function biscuitSize() {
+    const w = Math.max(190, noBtn.offsetWidth * 1.35);
+    return { w, h: (w * 150) / 220 };
+  }
+
+  function makeBiscuit(size, at) {
+    const el = document.createElement("div");
+    el.className = "biscuit-wrap";
+    el.style.width = `${size.w}px`;
+    el.innerHTML = `${App.cats.biscuit()}<span class="zzz"><span>z</span><span>z</span><span>z</span></span>`;
+    fx.placeAt(el, at);
+    fx.stage().appendChild(el);
+    return el;
+  }
+
+  // ---------- Mochi's walk (step 5) ----------
+  const WALK_SPEED = 0.55; // px per ms
+
+  function walkTo(walker, dest) {
+    const from = fx.posOf(walker);
+    const duration = Math.max(500, Math.hypot(dest.x - from.x, dest.y - from.y) / WALK_SPEED);
+    return fx.glide(walker, dest, { duration, easing: "linear" });
+  }
+
+  function cleanupWalker() {
+    if (noBtn.parentElement !== fx.stage()) fx.stage().appendChild(noBtn);
+    noBtn.classList.remove("carried");
+    fx.stage().querySelectorAll(".walker").forEach((w) => w.remove());
+    mochiEl.style.visibility = "";
+  }
+
   // ---------- the steps (one per No attempt) ----------
   const steps = [
     { // 1. The Swat
@@ -127,6 +159,130 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
       settle() {
         setMood("");
         applyState(2, { caption: false });
+        fx.placeAt(noBtn, spot());
+      },
+    },
+    { // 3. The Sit
+      async play() {
+        const r = fx.rectOf(noBtn);
+        const size = biscuitSize();
+        const at = geo.clampToViewport(
+          { x: r.x + r.w / 2 - size.w / 2, y: r.y + r.h / 2 - size.h * 0.6 }, size, fx.viewport());
+        biscuit = makeBiscuit(size, at);
+        await biscuit.animate([
+          { transform: `translateY(${-(at.y + size.h + 60)}px)` },
+          { transform: "translateY(0px)" },
+        ], { duration: 460, easing: "cubic-bezier(.55,0,1,.45)" }).finished;
+        biscuit.animate([{ transform: "scale(1.15, 0.8)" }, { transform: "scale(1, 1)" }],
+          { duration: 280, easing: "ease-out" });
+        fx.burst("THUD!", { x: at.x + size.w / 2, y: at.y });
+        fx.shake(appEl);
+        applyState(3);
+        biscuit.classList.add("sleeping");
+        await fx.wait(1200);
+        // squeeze out on the roomier side, then scoot away leaving paw prints
+        await noBtn.animate([
+          { transform: "scale(1, 1)" }, { transform: "scale(0.55, 1.35)" }, { transform: "scale(1, 1)" },
+        ], { duration: 380 }).finished;
+        const goRight = r.x + r.w / 2 < window.innerWidth / 2;
+        const out = { x: goRight ? at.x + size.w + 8 : at.x - noBtn.offsetWidth - 8, y: fx.posOf(noBtn).y };
+        await fx.glide(noBtn, geo.clampToViewport(out, fx.sizeOf(noBtn), fx.viewport()),
+          { duration: 260, easing: "ease-out" });
+        const dest = spot();
+        const centre = (p) => ({ x: p.x + noBtn.offsetWidth / 2, y: p.y + noBtn.offsetHeight / 2 });
+        fx.pawTrail(centre(fx.posOf(noBtn)), centre(dest));
+        await fx.glide(noBtn, dest, { duration: 800 });
+      },
+      settle() {
+        if (!biscuit) {
+          const size = biscuitSize();
+          biscuit = makeBiscuit(size, geo.randomSafeSpot(size, fx.viewport(), obstacles()));
+        }
+        biscuit.classList.add("sleeping");
+        applyState(3, { caption: false });
+        fx.placeAt(noBtn, spot());
+      },
+    },
+    { // 4. The Bat-Around
+      async play() {
+        const vp = fx.viewport();
+        const size = fx.sizeOf(noBtn);
+        const y = Math.min(Math.max(fx.posOf(noBtn).y, 90), vp.vh - size.h - 90);
+        const leftSpot = { x: 64, y };
+        const rightSpot = { x: vp.vw - size.w - 64, y };
+        await fx.glide(noBtn, leftSpot, { duration: 320, easing: "ease-in" });
+        let atLeft = true;
+        for (let i = 0; i < 3; i++) {
+          const edge = atLeft ? "left" : "right";
+          const point = geo.contactPoint(fx.rectOf(noBtn), edge);
+          const strike = fx.pawStrike(point, edge, { duration: 520 });
+          await strike.contact;
+          fx.burst("pat!", point);
+          await fx.glide(noBtn, atLeft ? rightSpot : leftSpot,
+            { duration: 420, spin: atLeft ? 360 : -360, arc: 50 });
+          atLeft = !atLeft;
+        }
+        const edge = atLeft ? "left" : "right";
+        const point = geo.contactPoint(fx.rectOf(noBtn), edge);
+        const strike = fx.pawStrike(point, edge);
+        await strike.contact;
+        fx.burst("BONK!", point);
+        applyState(4);
+        const corner = geo.safeCorner(fx.sizeOf(noBtn), fx.viewport(), obstacles());
+        await fx.glide(noBtn, corner, { duration: 560, easing: "cubic-bezier(.2,.7,.3,1)", spin: 540, arc: 90 });
+      },
+      settle() {
+        applyState(4, { caption: false });
+        fx.placeAt(noBtn, geo.safeCorner(fx.sizeOf(noBtn), fx.viewport(), obstacles()));
+      },
+    },
+    { // 5. Left the Chat
+      async play() {
+        const home = fx.rectOf(mochiEl);
+        const walker = document.createElement("div");
+        walker.className = "walker";
+        walker.style.width = `${home.w}px`;
+        walker.innerHTML = `<div class="walker-body">${App.cats.mochi()}</div>`;
+        const body = walker.firstElementChild;
+        const walkerSvg = walker.querySelector("svg");
+        walkerSvg.dataset.mood = "smug";
+        fx.placeAt(walker, home);
+        fx.stage().appendChild(walker);
+        mochiEl.style.visibility = "hidden";
+
+        const mouth = { x: home.w * 0.5, y: home.h * 0.5 }; // Mochi's mouth, inside the walker
+        const hold = () => ({ x: mouth.x - noBtn.offsetWidth / 2, y: mouth.y - 4 });
+        const r = fx.rectOf(noBtn);
+        await walkTo(walker, { x: r.x + r.w / 2 - mouth.x, y: r.y - mouth.y + 4 });
+
+        body.appendChild(noBtn); // picked up!
+        noBtn.classList.add("carried");
+        fx.placeAt(noBtn, hold());
+        const vw = window.innerWidth;
+        const exitRight = fx.posOf(walker).x + home.w / 2 > vw / 2;
+        await walkTo(walker, { x: exitRight ? vw + 40 : -home.w - 40, y: fx.posOf(walker).y });
+        fx.setCaption(captionEl, CONFIG.text.leftChat);
+        await fx.wait(2000);
+
+        applyState(5, { caption: false }); // the button comes back… edited
+        fx.placeAt(noBtn, hold());
+        const dest = spot();
+        walkerSvg.dataset.mood = "happy";
+        fx.placeAt(walker, { x: exitRight ? -home.w - 40 : vw + 40, y: dest.y - mouth.y + 4 });
+        await walkTo(walker, { x: dest.x + noBtn.offsetWidth / 2 - mouth.x, y: dest.y - mouth.y + 4 });
+
+        fx.stage().appendChild(noBtn); // dropped
+        noBtn.classList.remove("carried");
+        fx.placeAt(noBtn, dest);
+        fx.setCaption(captionEl, CONFIG.attempts[4].caption);
+        walkerSvg.dataset.mood = "smug";
+        await walkTo(walker, home);
+        walker.remove();
+        mochiEl.style.visibility = "";
+      },
+      settle() {
+        cleanupWalker();
+        applyState(5, { caption: false });
         fx.placeAt(noBtn, spot());
       },
     },

@@ -65,7 +65,7 @@ button:focus-visible { outline: 3px dashed var(--pink-dark); outline-offset: 4px
   justify-content: center;
   gap: 2rem;
   width: 100%;
-  min-height: 190px;
+  min-height: 240px; /* room for YES at 2.6x, ears included */
 }
 
 .yes-btn {
@@ -123,7 +123,7 @@ button:focus-visible { outline: 3px dashed var(--pink-dark); outline-offset: 4px
 
 @media (max-width: 600px) {
   .mochi-spot { width: 130px; }
-  .buttons { gap: 1.2rem; min-height: 160px; }
+  .buttons { gap: 1.2rem; min-height: 220px; }
 }
 
 /* ---------- cats ---------- */
@@ -230,3 +230,42 @@ body:not([data-screen="question"]) #stage { display: none; }
   from { opacity: 1; transform: translateY(0) scale(0.6); }
   to { opacity: 0; transform: translateY(-90px) scale(1.1); }
 }
+
+/* ---------- Biscuit, walker, bitten ---------- */
+.biscuit-wrap { z-index: 3; transform-origin: 50% 100%; }
+.biscuit-wrap svg,
+.walker svg { display: block; width: 100%; height: auto; overflow: visible; }
+.biscuit-wrap svg { filter: drop-shadow(0 6px 8px rgba(91, 58, 74, 0.2)); }
+
+.zzz { position: absolute; right: 10%; top: -4px; display: none; font-weight: 700; color: var(--muted); }
+.biscuit-wrap.sleeping .zzz { display: block; }
+.zzz span { position: absolute; opacity: 0; animation: zzz 2.4s ease-out infinite; }
+.zzz span:nth-child(2) { animation-delay: 0.8s; font-size: 1.2em; }
+.zzz span:nth-child(3) { animation-delay: 1.6s; font-size: 1.4em; }
+@keyframes zzz {
+  0% { opacity: 0; transform: translate(0, 0); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(18px, -40px); }
+}
+
+.walker { z-index: 3; }
+.walker-body { position: relative; animation: trot 0.28s ease-in-out infinite alternate; }
+@keyframes trot {
+  from { transform: translateY(0) rotate(-3deg); }
+  to { transform: translateY(-7px) rotate(3deg); }
+}
+
+.no-btn.bitten {
+  background: var(--pink);
+  box-shadow: none;
+  mask:
+    radial-gradient(circle 12px at calc(100% - 2px) 2px, #0000 95%, #000 100%),
+    radial-gradient(circle 9px at calc(100% - 24px) -3px, #0000 95%, #000 100%),
+    radial-gradient(circle 8px at 14px calc(100% + 2px), #0000 95%, #000 100%);
+  mask-composite: intersect;
+}
+
+.yes-btn.ears-wiggle::before { animation: ear-wiggle-l 0.5s ease-in-out infinite alternate; }
+.yes-btn.ears-wiggle::after { animation: ear-wiggle-r 0.5s ease-in-out infinite alternate; }
+@keyframes ear-wiggle-l { to { rotate: -30deg; } }
+@keyframes ear-wiggle-r { to { rotate: 30deg; } }
