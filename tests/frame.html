@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Phone frame</title>
+  <style>
+    html, body { margin: 0; background: #333; }
+    iframe { display: block; border: 0; }
+  </style>
+</head>
+<body>
+  <!-- Used by shot.py: Chrome windows can't be narrower than ~500px, so phone widths render in an iframe. -->
+  <iframe id="frame"></iframe>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const frame = document.getElementById("frame");
+    frame.width = params.get("w");
+    frame.height = params.get("h");
+    frame.src = params.get("src");
+  </script>
+</body>
+</html>
