@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A question for Shira 🐾</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-screen="question">
+  <main id="app">
+    <section id="screen-question" class="screen">
+      <div id="mochi" class="mochi-spot"></div>
+      <h1 id="question-title"></h1>
+      <p id="yay-sub" class="sub" hidden></p>
+      <div class="buttons">
+        <button id="yes-btn" class="yes-btn" type="button"></button>
+        <button id="no-btn" class="no-btn" type="button"></button>
+      </div>
+      <p id="caption" class="caption" aria-live="polite"></p>
+    </section>
+
+    <section id="screen-dates" class="screen" hidden>
+      <h2 id="dates-title"></h2>
+      <div id="date-cards" class="date-cards"></div>
+    </section>
+
+    <section id="screen-ticket" class="screen" hidden>
+      <div id="ticket"></div>
+      <p id="ticket-note" class="sub ticket-note"></p>
+      <button id="change-pick" class="link-btn" type="button"></button>
+    </section>
+  </main>
+
+  <div id="stage"></div>
+  <div id="rain"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/cats.js"></script>
+  <script src="js/geometry.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/escalation.js"></script>
+  <script src="js/notify.js"></script>
+  <script src="js/no-button.js"></script>
+  <script src="js/celebration.js"></script>
+  <script src="js/date-picker.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
