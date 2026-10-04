@@ -24,6 +24,14 @@ window.App = window.App || {};
     };
   }
 
+  // Sent as soon as she taps an activity, before she has picked the day.
+  function activityMessage(idea, changed) {
+    const choice = `${idea.emoji} ${idea.title} (now picking a day…)`;
+    return changed
+      ? { title: `🎯 ${CONFIG.herName} is changing her pick`, message: `→ ${choice}` }
+      : { title: `🎯 ${CONFIG.herName} picked an activity`, message: choice };
+  }
+
   function pickMessage(idea, day, changed) {
     const choice = `${idea.emoji} ${idea.title} · ${day.name}`;
     return changed
@@ -55,5 +63,5 @@ window.App = window.App || {};
     return payload;
   }
 
-  App.notify = { deliveryMode, openMessage, yesMessage, pickMessage, send };
+  App.notify = { deliveryMode, openMessage, yesMessage, activityMessage, pickMessage, send };
 })();

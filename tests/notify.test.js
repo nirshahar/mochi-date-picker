@@ -56,3 +56,11 @@ test("notify.deliveryMode: test/preview mode always sends (marked TEST); no key 
   eq(App.notify.deliveryMode({ test: true, hash: "#abc123", linkKey: "abc123" }), "test");
   eq(App.notify.deliveryMode({ test: false, hash: "", linkKey: "" }), "real");
 });
+
+test("notify.activityMessage: activity picked, before the day", () => {
+  const idea = { emoji: "☕🐱", title: "Cat café" };
+  eq(App.notify.activityMessage(idea, false),
+    { title: `🎯 ${CONFIG.herName} picked an activity`, message: "☕🐱 Cat café (now picking a day…)" });
+  eq(App.notify.activityMessage(idea, true),
+    { title: `🎯 ${CONFIG.herName} is changing her pick`, message: "→ ☕🐱 Cat café (now picking a day…)" });
+});

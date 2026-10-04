@@ -19,7 +19,7 @@ Visits to the bare URL (scrapers, people browsing the repo) never notify you. Wi
 ## Get the notifications (one-time)
 1. Install the **ntfy** app (Android / iOS).
 2. Subscribe to the topic in `js/config.js` (`ntfyTopic`), on server `ntfy.sh`.
-3. You'll get "👀 {HER} just opened the page" (on a phone / on a computer) once she starts interacting, then "{HER} said YES! 💕" (with how many times she tried No) and "{HER} picked a date! 🐾" with the idea and the day (plus "changed her pick" if she does).
+3. You'll get "👀 {HER} just opened the page" (on a phone / on a computer) once she starts interacting, then "{HER} said YES! 💕" (with how many times she tried No), "🎯 {HER} picked an activity" as soon as she taps one, and "{HER} picked a date! 🐾" with the idea and the day (plus "changed her pick" if she does).
 
 When you first subscribe you may see a few "🧪 TEST" messages: those are from testing the page.
 

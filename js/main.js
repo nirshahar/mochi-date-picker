@@ -93,7 +93,10 @@ window.App = window.App || {};
       showScreen("days");
     }
     function showDates() {
-      App.dates.renderDateCards($("date-cards"), CONFIG.dateIdeas, showDays);
+      App.dates.renderDateCards($("date-cards"), CONFIG.dateIdeas, (idea) => {
+        notify(App.notify.activityMessage(idea, hasPicked));
+        showDays(idea);
+      });
       showScreen("dates");
     }
     $("change-pick").addEventListener("click", showDates);
