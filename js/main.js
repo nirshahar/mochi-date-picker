@@ -5,7 +5,7 @@ window.App = window.App || {};
   function parseParams(search) {
     const p = new URLSearchParams(search);
     const step = Math.max(0, Math.min(CONFIG.attempts.length, parseInt(p.get("step"), 10) || 0));
-    const screen = ["dates", "ticket"].includes(p.get("screen")) ? p.get("screen") : null;
+    const screen = ["dates", "days", "ticket"].includes(p.get("screen")) ? p.get("screen") : null;
     // Any debug param means someone is previewing, so its notifications are marked TEST too.
     const test = ["test", "demo", "step", "screen"].some((name) => p.has(name));
     return { test, step, screen, demo: p.has("demo") };
@@ -61,6 +61,7 @@ window.App = window.App || {};
     $("yes-btn").textContent = T.yes;
     $("no-btn").textContent = T.no;
     $("dates-title").textContent = T.datesTitle;
+    $("days-title").textContent = T.daysTitle;
     $("ticket-note").textContent = T.ticketNote;
     $("change-pick").textContent = T.changePick;
 
@@ -70,18 +71,23 @@ window.App = window.App || {};
     setupPurr(mochiEl, T.purr);
 
     let hasPicked = false;
-    function showTicket(idea) {
+    function showTicket(idea, day) {
       App.dates.renderTicket($("ticket"), {
-        herName: CONFIG.herName, fromName: CONFIG.fromName, catName: CONFIG.catName, idea,
+        herName: CONFIG.herName, fromName: CONFIG.fromName, catName: CONFIG.catName, idea, day,
       });
       showScreen("ticket");
     }
-    function showDates() {
-      App.dates.renderDateCards($("date-cards"), CONFIG.dateIdeas, (idea) => {
-        App.notify.send(App.notify.pickMessage(idea, hasPicked), { test: params.test });
+    function showDays(idea) {
+      const days = App.dates.upcomingDays(new Date(), CONFIG.dayCount);
+      App.dates.renderDayCards($("day-cards"), days, (day) => {
+        App.notify.send(App.notify.pickMessage(idea, day, hasPicked), { test: params.test });
         hasPicked = true;
-        showTicket(idea);
+        showTicket(idea, day);
       });
+      showScreen("days");
+    }
+    function showDates() {
+      App.dates.renderDateCards($("date-cards"), CONFIG.dateIdeas, showDays);
       showScreen("dates");
     }
     $("change-pick").addEventListener("click", showDates);
@@ -103,7 +109,8 @@ window.App = window.App || {};
 
     showScreen("question");
     if (params.screen === "dates") showDates();
-    else if (params.screen === "ticket") showTicket(CONFIG.dateIdeas[0]);
+    else if (params.screen === "days") showDays(CONFIG.dateIdeas[0]);
+    else if (params.screen === "ticket") showTicket(CONFIG.dateIdeas[0], App.dates.upcomingDays(new Date(), 1)[0]);
     else if (params.step) requestAnimationFrame(() => noCtl.skipTo(params.step));
     else if (params.demo) runDemo(noCtl.escalation);
   }

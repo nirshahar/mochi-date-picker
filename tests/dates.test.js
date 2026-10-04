@@ -61,3 +61,43 @@ test("dates.renderTicket: names are text, never HTML", () => {
   App.dates.renderTicket(box, { herName: "<b>x</b>", fromName: "", catName: "Mochi", idea: IDEAS[0] });
   eq(box.querySelector(".ticket-names b"), null);
 });
+
+// Fri 30 Oct 2026, mid-afternoon: the list must cross into November.
+const FROM = new Date(2026, 9, 30, 15, 0);
+
+test("dates.upcomingDays: starts today, crosses month ends, labels today and tomorrow", () => {
+  const days = App.dates.upcomingDays(FROM, 4);
+  eq(days.map((d) => d.name), ["Fri 30 Oct", "Sat 31 Oct", "Sun 1 Nov", "Mon 2 Nov"]);
+  eq(days.map((d) => d.relative), ["Today", "Tomorrow", "", ""]);
+  eq(days.map((d) => d.iso), ["2026-10-30", "2026-10-31", "2026-11-01", "2026-11-02"]);
+  eq([days[2].weekday, days[2].day, days[2].month], ["Sun", 1, "Nov"]);
+});
+
+test("dates.upcomingDays: two weeks by default config", () => {
+  eq(CONFIG.dayCount, 14);
+  eq(App.dates.upcomingDays(FROM, CONFIG.dayCount).length, 14);
+});
+
+test("dates.renderDayCards: one card per day, clicking one picks it (once)", async () => {
+  const box = document.createElement("div");
+  const picked = [];
+  App.dates.renderDayCards(box, App.dates.upcomingDays(FROM, 3), (day) => picked.push(day.name), { stampMs: 0 });
+  const cards = box.querySelectorAll(".day-card");
+  eq(cards.length, 3);
+  eq(cards[0].querySelector(".day-name").textContent, "Today");
+  eq(cards[2].querySelector(".day-name").textContent, "Sun");
+  eq(cards[2].querySelector(".day-num").textContent, "1");
+  eq(cards[2].querySelector(".day-month").textContent, "Nov");
+  cards[2].click();
+  cards[1].click();
+  assert(cards[2].classList.contains("stamped"), "stamped class");
+  await tick();
+  eq(picked, ["Sun 1 Nov"]);
+});
+
+test("dates.renderTicket: shows when, if a day was picked", () => {
+  const box = document.createElement("div");
+  const day = App.dates.upcomingDays(FROM, 2)[1];
+  App.dates.renderTicket(box, { herName: "Her", fromName: "Me", catName: "Mochi", idea: IDEAS[0], day });
+  eq(box.querySelector(".ticket-when b").textContent, "Sat 31 Oct");
+});

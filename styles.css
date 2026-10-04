@@ -380,3 +380,23 @@ body:not([data-screen="question"]) #stage { display: none; }
 @media (max-width: 600px) {
   .date-card { max-width: none; }
 }
+
+/* ---------- day picker ---------- */
+.day-cards {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1.6rem 0.8rem;
+  width: min(760px, 100%);
+}
+.day-card { max-width: none; gap: 0; padding: 0.7rem 0.3rem 0.8rem; }
+.day-name { font-size: 0.95rem; font-weight: 600; color: var(--pink-dark); }
+.day-num { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+.day-month { font-size: 0.9rem; color: var(--muted); }
+.day-card .card-stamp { width: 30px; right: 4px; bottom: 4px; }
+.day-card .card-ears::before,
+.day-card .card-ears::after { top: -13px; width: 18px; height: 15px; }
+.ticket-when { font-size: 1.2rem; }
+
+@media (max-width: 600px) {
+  .day-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.2rem 0.6rem; }
+}

@@ -17,8 +17,8 @@ window.App = window.App || {};
     };
   }
 
-  function pickMessage(idea, changed) {
-    const choice = `${idea.emoji} ${idea.title}`;
+  function pickMessage(idea, day, changed) {
+    const choice = `${idea.emoji} ${idea.title} · ${day.name}`;
     return changed
       ? { title: `${CONFIG.herName} changed her pick`, message: `→ ${choice}` }
       : { title: `${CONFIG.herName} picked a date! 🐾`, message: choice };

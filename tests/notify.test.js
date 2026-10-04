@@ -4,10 +4,13 @@ test("notify.yesMessage: counts attempts with the right plural", () => {
   eq(App.notify.yesMessage(5).message, "After 5 no-attempts 😼");
 });
 
-test("notify.pickMessage: first pick vs changed pick", () => {
+test("notify.pickMessage: idea and day, first pick vs changed pick", () => {
   const idea = { emoji: "🍿", title: "Movie night" };
-  eq(App.notify.pickMessage(idea, false), { title: `${CONFIG.herName} picked a date! 🐾`, message: "🍿 Movie night" });
-  eq(App.notify.pickMessage(idea, true), { title: `${CONFIG.herName} changed her pick`, message: "→ 🍿 Movie night" });
+  const day = { name: "Fri 30 Oct" };
+  eq(App.notify.pickMessage(idea, day, false),
+    { title: `${CONFIG.herName} picked a date! 🐾`, message: "🍿 Movie night · Fri 30 Oct" });
+  eq(App.notify.pickMessage(idea, day, true),
+    { title: `${CONFIG.herName} changed her pick`, message: "→ 🍿 Movie night · Fri 30 Oct" });
 });
 
 test("notify.send: JSON body to the ntfy root, emoji safe (no custom headers)", () => {

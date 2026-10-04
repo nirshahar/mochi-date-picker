@@ -60,3 +60,7 @@ test("purr: petting Mochi just before YES doesn't wipe her celebration smile", a
     stage.remove();
   }
 });
+
+test("parseParams: ?screen=days previews the day picker", () => {
+  eq(App.parseParams("?screen=days").screen, "days");
+});

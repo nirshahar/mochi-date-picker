@@ -23,6 +23,7 @@ const CONFIG = (() => {
       yayTitle: `YAAAY!! I knew it, ${HER} 💕`,
       yaySub: `${CAT} approves. (She never approves of anything.)`,
       datesTitle: "Okay, now the important part… pick our first date 😽",
+      daysTitle: "And when? Pick a day 🗓️",
       ticketNote: `Screenshot this and send it to me 😽 …actually, ${CAT} already told me.`,
       changePick: "change my pick",
       purr: "purr~ 💗",
@@ -38,6 +39,8 @@ const CONFIG = (() => {
       { noLabel: "no", caption: "Cats don't take no for an answer.", yesScale: 2.2, noSize: 0.6 },
       { noLabel: "yes 💕", caption: `${CAT} brought it back. With a few edits.`, yesScale: 2.6, noSize: 1 },
     ],
+
+    dayCount: 14, // how many days ahead she can pick from, starting today
 
     dateIdeas: [
       { emoji: "☕🐱", title: "Cat café", blurb: "Coffee, surrounded by judgmental cats." },
