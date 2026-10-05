@@ -76,14 +76,14 @@ test("no-button: YES while Mochi is walking off brings her home (no second Mochi
 // On this branch only her clicks make sounds; Mochi's tricks are silent.
 const pressNo = (f) => f.noBtn.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
 
-test("sounds: every click on No taps, even mid-trick", () => withFixture(async (f) => {
+test("sounds: every click on No pops, even mid-trick", () => withFixture(async (f) => {
   const played = await recordSounds(async () => {
     pressNo(f);
     await pause(500); // the swat is still running, so this click is ignored…
     pressNo(f);
     await pause(50);
   });
-  eq(played, ["tap", "tap"]); // …but it still taps
+  eq(played, ["pop", "pop"]); // …but it still pops
 }));
 
 test("sounds: Mochi's tricks make no sound of their own", async () => {
@@ -99,10 +99,10 @@ test("sounds: Mochi's tricks make no sound of their own", async () => {
   }
 });
 
-test("sounds: clicking 'yes 💕' taps too", () => withFixture(async (f) => {
+test("sounds: clicking 'yes 💕' leaves the pop to YES (one pop, not two)", () => withFixture(async (f) => {
   f.ctl.skipTo(5);
-  const played = await recordSounds(() => pressNo(f));
-  eq(played, ["tap"]);
+  const played = await recordSounds(() => pressNo(f)); // the fixture's onYes is silent
+  eq(played, []);
 }));
 
 test("no-button: No never lands on the sound button", async () => {

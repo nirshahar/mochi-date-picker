@@ -2,7 +2,7 @@
 
 A cat-themed "will you date me?" page. Mochi the cat guards the **No** button: she swats it, Biscuit sits on it, paws bat it around, and finally Mochi walks off with it and brings it back as "yes 💕". After YES, she picks a first date and a day (from the next two weeks), gets an official date ticket, and your phone gets a push notification.
 
-Her clicks come with simple sound effects: a purr when she pets Mochi, a soft tap on No, a "mew" on YES, and a pop when she picks an activity or a day. Mochi's tricks themselves are silent. (The `main` branch has the full version, with a sound for every trick.) The sounds are made in the browser by `js/sfx.js`, so there are no audio files. A 🔊 button in the top corner mutes them, and the page remembers her choice. Browsers only play sound after a tap or click, so nothing plays until she touches the page, and on an iPhone in silent mode nothing plays at all.
+Her clicks come with simple sound effects: a purr when she pets Mochi, and a pop for every other click (No, YES, picking an activity or a day). Mochi's tricks themselves are silent. (The `main` branch has the full version, with a sound for every trick.) The sounds are made in the browser by `js/sfx.js`, so there are no audio files. A 🔊 button in the top corner mutes them, and the page remembers her choice. Browsers only play sound after a tap or click, so nothing plays until she touches the page, and on an iPhone in silent mode nothing plays at all.
 
 All names live in `js/config.js`: `HER` (who's being asked) and `ME` (you, shown on the ticket). Change them there and the whole page follows. Below, `{HER}` means whatever `HER` is set to.
 

@@ -35,18 +35,6 @@ window.App = window.App || {};
     return osc;
   }
 
-  // A low-frequency oscillator wobbling `param` by ±depth (depth may be [secondsAfterT, amount] points).
-  function wobble(ctx, param, t, { rate, depth, dur }) {
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = rate;
-    const amount = ctx.createGain();
-    if (Array.isArray(depth)) ramp(amount.gain, t, depth);
-    else amount.gain.value = depth;
-    lfo.connect(amount).connect(param);
-    lfo.start(t);
-    lfo.stop(t + dur + 0.05);
-  }
-
   const noiseBuffers = new WeakMap();
   function noiseBuffer(ctx) {
     if (!noiseBuffers.has(ctx)) {
@@ -116,26 +104,7 @@ window.App = window.App || {};
       });
     },
 
-    // YES: a happy cartoon "mew" (the filter opens and closes like a mouth: m-ee-ow).
-    mew(ctx, out, t) {
-      const dur = 0.55;
-      const mouth = ctx.createBiquadFilter();
-      mouth.type = "lowpass";
-      mouth.Q.value = 5;
-      ramp(mouth.frequency, t, [[0, 700], [0.12, 3200], [0.5, 900]]);
-      mouth.connect(out);
-      const voice = tone(ctx, mouth, t, {
-        type: "sawtooth", glide: [[0, 620], [0.1, 900], [0.3, 820], [dur, 560]], dur, peak: 0.16, attack: 0.04, hold: 0.32,
-      });
-      wobble(ctx, voice.frequency, t, { rate: 7, depth: 12, dur });
-    },
-
-    // Clicking No or "change my pick": a soft little tap.
-    tap(ctx, out, t) {
-      tone(ctx, out, t, { glide: [[0, 950], [0.06, 620]], dur: 0.09, peak: 0.3, attack: 0.002 });
-    },
-
-    // A card being stamped with a paw (and unmuting).
+    // Every click: a card stamped with a paw, No, YES, "change my pick", unmuting.
     pop(ctx, out, t) {
       tone(ctx, out, t, { glide: [[0, 380], [0.06, 1300]], dur: 0.1, peak: 0.35, attack: 0.002 });
     },

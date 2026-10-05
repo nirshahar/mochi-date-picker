@@ -1,5 +1,5 @@
 // Sound effects are rendered into an OfflineAudioContext, so the tests "hear" what she would.
-const SOUND_NAMES = ["purr", "pop", "tap", "mew"];
+const SOUND_NAMES = ["purr", "pop"];
 const RATE = 22050;
 
 function memoryStorage() {
@@ -63,7 +63,7 @@ test("sfx: an unknown sound name is ignored", async () => {
 test("sfx: muted plays nothing", async () => {
   const r = await render((sfx) => {
     sfx.setMuted(true);
-    eq(sfx.play("mew"), false);
+    eq(sfx.play("pop"), false);
   });
   eq(r.peak, 0);
 });
@@ -165,7 +165,7 @@ test("sounds: picking a date or a day card pops", async () => {
   eq(played, ["pop", "pop"]);
 });
 
-test("sounds: YES mews", async () => {
+test("sounds: YES pops", async () => {
   const rain = document.createElement("div");
   rain.id = "rain";
   const stage = document.createElement("div");
@@ -183,8 +183,8 @@ test("sounds: YES mews", async () => {
         titleEl: $("h1")[0], subEl: $("p")[0], captionEl: $("p")[1],
       });
     });
-    eq(played, ["mew"]);
-    await celebration; // its floating hearts need the stage until it's over
+    await celebration; // its floating hearts need the stage until it's over, even if the check fails
+    eq(played, ["pop"]);
   } finally {
     box.remove();
     stage.remove();

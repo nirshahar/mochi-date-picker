@@ -347,11 +347,11 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
 
   function tryNo() {
     if (!active) return;
-    App.sfx.play("tap"); // on this branch only her clicks make sounds
     if (esc.converted) {
-      onYes();
+      onYes(); // YES makes its own pop
       return;
     }
+    App.sfx.play("pop"); // on this branch only her clicks make sounds
     stopTease();
     esc.attempt();
   }

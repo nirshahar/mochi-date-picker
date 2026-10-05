@@ -104,7 +104,7 @@ window.App = window.App || {};
       showScreen("dates");
     }
     $("change-pick").addEventListener("click", () => {
-      App.sfx.play("tap");
+      App.sfx.play("pop");
       showDates();
     });
 

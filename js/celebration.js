@@ -28,7 +28,7 @@ window.App = window.App || {};
 
   // Resolves when it's time to show the date picker.
   async function celebrate({ yesBtn, noBtn, mochiEl, biscuit, titleEl, subEl, captionEl }) {
-    App.sfx.play("mew");
+    App.sfx.play("pop");
     [yesBtn, noBtn].forEach((b) => b.classList.add("pop-away"));
     captionEl.textContent = "";
     mochiEl.style.visibility = "";
