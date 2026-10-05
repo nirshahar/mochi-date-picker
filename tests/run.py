@@ -18,7 +18,7 @@ def main():
     page = subprocess.run(["wslpath", "-m", os.path.join(HERE, "test.html")],
                           capture_output=True, text=True, check=True).stdout.strip()
     result = subprocess.run(
-        [CHROME, "--headless=new", "--disable-gpu", "--virtual-time-budget=8000",
+        [CHROME, "--headless=new", "--disable-gpu", "--virtual-time-budget=20000",
          "--dump-dom", "file:///" + page],
         capture_output=True, timeout=180,
     )

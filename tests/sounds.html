@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sound board</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    body { padding: 24px; font-family: var(--font); }
+    h1 { max-width: none; margin-bottom: 0.4rem; font-size: 1.8rem; }
+    p { margin: 0 0 1.4rem; color: var(--muted); }
+    .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .board button {
+      display: grid; gap: 2px; padding: 12px 14px; text-align: left; color: var(--ink);
+      background: #fff; border: 2px solid var(--pink-soft); border-radius: 14px;
+    }
+    .board button:hover { border-color: var(--pink); }
+    .board b { font-size: 1.1rem; }
+    .board span { font-size: 0.9rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <h1>Sound board 🔊</h1>
+  <p>Every sound on the page. Click one to hear it (they are made in js/sfx.js).</p>
+  <div class="board" id="board"></div>
+  <script src="../js/sfx.js"></script>
+  <script>
+    const WHERE = {
+      purr: "petting Mochi", mrrp: "trick 2: Mochi is alarmed", whoosh: "a paw swipes in",
+      swat: "the paw hits No", tap: "trick 2: the warning tap", boing: "No lands after a swat",
+      slide: "trick 3: Biscuit falls", thud: "trick 3: Biscuit lands", squeak: "trick 3: No squeezes out",
+      patter: "trick 3: paw-print trail", boop: "trick 4: the three pats", bonk: "trick 4: BONK",
+      step: "trick 5: Mochi's footsteps", leave: "trick 5: no has left the chat",
+      sparkle: "trick 5: No comes back as yes 💕", fanfare: "YES (ends with the mew)",
+      mew: "inside the fanfare", sparkles: "YES: the cat rain", pop: "picking a card, unmuting",
+      tada: "the date ticket",
+    };
+    const sfx = App.createSfx({ storage: null }); // ignores the page's mute button
+    const board = document.getElementById("board");
+    sfx.names.forEach((name) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.innerHTML = "<b></b><span></span>";
+      btn.querySelector("b").textContent = name;
+      btn.querySelector("span").textContent = WHERE[name] || "";
+      btn.addEventListener("click", () => {
+        sfx.unlock();
+        if (name === "boop") [0, 4, 7].forEach((pitch, i) => setTimeout(() => sfx.play("boop", { pitch }), i * 600));
+        else sfx.play(name);
+      });
+      board.appendChild(btn);
+    });
+  </script>
+</body>
+</html>

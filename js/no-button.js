@@ -1,9 +1,10 @@
 // Screen 1's "No" button: Mochi's escalating tricks, plus the hover tease.
 window.App = window.App || {};
 
-App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appEl, onYes }) {
+App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appEl, onYes, avoidEls = [] }) {
   const fx = App.fx;
   const geo = App.geo;
+  const sfx = (name, opts) => App.sfx.play(name, opts);
   const mochiSvg = () => mochiEl.querySelector("svg");
   let active = true;
   let yesScale = 1;
@@ -38,6 +39,7 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
   function obstacles() {
     const list = [scaledRect(yesBtn, yesScale), fx.rectOf(mochiEl), fx.rectOf(titleEl), fx.rectOf(captionEl)];
     if (biscuit) list.push(fx.rectOf(biscuit));
+    avoidEls.forEach((el) => list.push(fx.rectOf(el)));
     return list;
   }
 
@@ -65,12 +67,13 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
     fx.placeAt(noBtn, r);
   }
 
-  async function strikeNo(burstText) {
+  async function strikeNo(burstText, hitSound) {
     const r = fx.rectOf(noBtn);
     const edge = geo.nearestEdge(r, fx.viewport());
     const point = geo.contactPoint(r, edge);
     const strike = fx.pawStrike(point, edge);
     await live(strike.contact);
+    sfx(hitSound);
     fx.burst(burstText, point);
     return { edge, done: strike.done };
   }
@@ -86,6 +89,7 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
     const dest = spot();
     off.cancel();
     fx.placeAt(noBtn, dest);
+    live(fx.wait(420)).then(() => sfx("boing")); // the moment it hits the ground
     await live(noBtn.animate([
       { transform: `translateY(${-(dest.y + 140)}px)`, easing: "cubic-bezier(.5,0,1,.6)" },
       { transform: "translateY(0px)", offset: 0.65, easing: "ease-out" },
@@ -123,7 +127,11 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
   function walkTo(walker, dest) {
     const from = fx.posOf(walker);
     const duration = Math.max(500, Math.hypot(dest.x - from.x, dest.y - from.y) / WALK_SPEED);
-    return fx.glide(walker, dest, { duration, easing: "linear" });
+    const footsteps = setInterval(() => { // in time with the trot
+      if (active && walker.isConnected) sfx("step");
+      else clearInterval(footsteps);
+    }, 280);
+    return fx.glide(walker, dest, { duration, easing: "linear" }).finally(() => clearInterval(footsteps));
   }
 
   function cleanupWalker() {
@@ -141,7 +149,8 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
   const steps = [
     { // 1. The Swat
       async play() {
-        const { edge } = await live(strikeNo("SWAT!"));
+        sfx("whoosh");
+        const { edge } = await live(strikeNo("SWAT!", "swat"));
         detach(); // only now, so YES re-centres while No is already flying
         applyState(1);
         moodFor("smug", 1600);
@@ -157,11 +166,13 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
       async play() {
         setMood("alarmed");
         fx.bubble(CONFIG.text.mrrp, fx.rectOf(mochiEl));
+        sfx("mrrp");
         await live(fx.wait(650));
-        const first = await live(strikeNo("tap"));
+        const first = await live(strikeNo("tap", "tap"));
         await live(wobble());
         await live(first.done);
-        const { edge } = await live(strikeNo("SWAT!!"));
+        sfx("whoosh");
+        const { edge } = await live(strikeNo("SWAT!!", "swat"));
         applyState(2);
         moodFor("smug", 1600);
         await live(flyOffAndDrop(edge));
@@ -179,18 +190,21 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
         const at = geo.clampToViewport(
           { x: r.x + r.w / 2 - size.w / 2, y: r.y + r.h / 2 - size.h * 0.6 }, size, fx.viewport());
         biscuit = makeBiscuit(size, at);
+        sfx("slide");
         await live(biscuit.animate([
           { transform: `translateY(${-(at.y + size.h + 60)}px)` },
           { transform: "translateY(0px)" },
         ], { duration: 460, easing: "cubic-bezier(.55,0,1,.45)" }).finished);
         biscuit.animate([{ transform: "scale(1.15, 0.8)" }, { transform: "scale(1, 1)" }],
           { duration: 280, easing: "ease-out" });
+        sfx("thud");
         fx.burst("THUD!", { x: at.x + size.w / 2, y: at.y });
         fx.shake(appEl);
         applyState(3);
         biscuit.classList.add("sleeping");
         await live(fx.wait(1200));
         // squeeze out on the roomier side, then scoot away leaving paw prints
+        sfx("squeak");
         await live(noBtn.animate([
           { transform: "scale(1, 1)" }, { transform: "scale(0.55, 1.35)" }, { transform: "scale(1, 1)" },
         ], { duration: 380 }).finished);
@@ -201,6 +215,7 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
         const dest = spot();
         const centre = (p) => ({ x: p.x + noBtn.offsetWidth / 2, y: p.y + noBtn.offsetHeight / 2 });
         fx.pawTrail(centre(fx.posOf(noBtn)), centre(dest));
+        sfx("patter");
         await live(fx.glide(noBtn, dest, { duration: 800 }));
       },
       settle() {
@@ -227,6 +242,7 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
           const point = geo.contactPoint(fx.rectOf(noBtn), edge);
           const strike = fx.pawStrike(point, edge, { duration: 520 });
           await live(strike.contact);
+          sfx("boop", { pitch: [0, 4, 7][i] }); // three pats going up: do, mi, sol
           fx.burst("pat!", point);
           await live(fx.glide(noBtn, atLeft ? rightSpot : leftSpot,
             { duration: 420, spin: atLeft ? 360 : -360, arc: 50 }));
@@ -236,6 +252,7 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
         const point = geo.contactPoint(fx.rectOf(noBtn), edge);
         const strike = fx.pawStrike(point, edge);
         await live(strike.contact);
+        sfx("bonk");
         fx.burst("BONK!", point);
         applyState(4);
         const corner = geo.safeCorner(fx.sizeOf(noBtn), fx.viewport(), obstacles());
@@ -272,6 +289,7 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
         const exitRight = fx.posOf(walker).x + home.w / 2 > vw / 2;
         await live(walkTo(walker, { x: exitRight ? vw + 40 : -home.w - 40, y: fx.posOf(walker).y }));
         fx.setCaption(captionEl, CONFIG.text.leftChat);
+        sfx("leave");
         await live(fx.wait(2000));
 
         applyState(5, { caption: false }); // the button comes back… edited
@@ -285,6 +303,7 @@ App.setupNoButton = function ({ noBtn, yesBtn, mochiEl, titleEl, captionEl, appE
         noBtn.classList.remove("carried");
         fx.placeAt(noBtn, dest);
         esc.convert(); // "yes 💕" works from this moment, not only once Mochi is home
+        sfx("sparkle");
         fx.setCaption(captionEl, CONFIG.attempts[4].caption);
         walkerSvg.dataset.mood = "smug";
         await live(walkTo(walker, home));

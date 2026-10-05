@@ -37,6 +37,7 @@ window.App = window.App || {};
       card.addEventListener("click", () => {
         if (picked) return;
         picked = true;
+        App.sfx.play("pop");
         card.classList.add("stamped");
         setTimeout(() => onPick(item), stampMs);
       });

@@ -2,6 +2,8 @@
 
 A cat-themed "will you date me?" page. Mochi the cat guards the **No** button: she swats it, Biscuit sits on it, paws bat it around, and finally Mochi walks off with it and brings it back as "yes 💕". After YES, she picks a first date and a day (from the next two weeks), gets an official date ticket, and your phone gets a push notification.
 
+Everything comes with cute sound effects (swats, boings, a purr when she pets Mochi, a fanfare for YES). They're made in the browser by `js/sfx.js`, so there are no audio files. A 🔊 button in the top corner mutes them, and the page remembers her choice. Browsers only play sound after a tap or click, so nothing plays until she touches the page, and on an iPhone in silent mode nothing plays at all.
+
 All names live in `js/config.js`: `HER` (who's being asked) and `ME` (you, shown on the ticket). Change them there and the whole page follows. Below, `{HER}` means whatever `HER` is set to.
 
 ## Open it
@@ -40,3 +42,4 @@ Everything you might want to change is in `js/config.js`: the names (`HER`, `ME`
 - `python3 tests/run.py` runs the unit tests in headless Chrome.
 - `python3 tests/shot.py index.html "?step=3"` takes a screenshot into `tests/screenshots/`. Add `--live` to run animations in real time, and `--act=down:no@600,click:yes@4000` to script clicks (see `tests/frame.html`).
 - `tests/gallery.html` shows every cat drawing and mood.
+- `tests/sounds.html` has a button for every sound effect, to hear them one by one.

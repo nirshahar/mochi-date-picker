@@ -3,7 +3,7 @@
 // she might click YES mid-trick.
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
-function noButtonFixture() {
+function noButtonFixture({ avoidEls = [] } = {}) {
   const stage = document.createElement("div");
   stage.id = "stage";
   const app = document.createElement("div");
@@ -15,7 +15,7 @@ function noButtonFixture() {
   const $ = (sel) => app.querySelector(sel);
   const ctl = App.setupNoButton({
     noBtn: $(".no-btn"), yesBtn: $(".yes-btn"), mochiEl: $(".mochi-spot"), titleEl: $("h1"),
-    captionEl: $(".caption"), appEl: app, onYes: () => {},
+    captionEl: $(".caption"), appEl: app, onYes: () => {}, avoidEls,
   });
   return {
     ctl,
@@ -33,8 +33,8 @@ function noButtonFixture() {
 }
 
 // Always cleans up, even when an assertion fails (leftover #stage elements would confuse later tests).
-async function withFixture(fn) {
-  const f = noButtonFixture();
+async function withFixture(fn, opts) {
+  const f = noButtonFixture(opts);
   try {
     await fn(f);
   } finally {
@@ -71,3 +71,58 @@ test("no-button: YES while Mochi is walking off brings her home (no second Mochi
   eq(f.stage.querySelector(".walker"), null, "walker removed");
   eq(f.mochiEl.style.visibility, "", "home Mochi visible");
 }));
+
+test("sounds: the first swat whooshes, then smacks on contact", () => withFixture(async (f) => {
+  const played = await recordSounds(async (log) => {
+    f.ctl.escalation.attempt();
+    await pause(50);
+    eq(log, ["whoosh"], "paw on its way");
+    await pause(400); // past the paw's contact (~230ms)
+  });
+  eq(played, ["whoosh", "swat"]);
+}));
+
+test("sounds: YES mid-swat silences the rest of the trick", () => withFixture(async (f) => {
+  const played = await recordSounds(async () => {
+    f.ctl.escalation.attempt();
+    await pause(50);
+    f.ctl.deactivate();
+    await pause(500);
+  });
+  eq(played, ["whoosh"]);
+}));
+
+test("sounds: Mochi's warning starts with a mrrp", () => withFixture(async (f) => {
+  f.ctl.skipTo(1);
+  const played = await recordSounds(() => { f.ctl.escalation.attempt(); }); // the trick itself never ends here
+  eq(played[0], "mrrp");
+}));
+
+test("sounds: YES while Mochi walks off stops her footsteps", () => withFixture(async (f) => {
+  f.ctl.skipTo(4);
+  const played = await recordSounds(async (log) => {
+    f.ctl.escalation.attempt(); // step 5: Mochi walks over to No
+    await pause(700);
+    assert(log.includes("step"), `footsteps while walking (got ${JSON.stringify(log)})`);
+    f.ctl.deactivate();
+    const before = log.length;
+    await pause(700);
+    eq(log.length, before, "no footsteps after YES");
+  });
+  assert(played.length > 0);
+}));
+
+test("no-button: No never lands on the sound button", async () => {
+  const soundBtn = document.createElement("button");
+  soundBtn.style.cssText = "position: fixed; left: 0; bottom: 0; width: 260px; height: 140px;";
+  document.body.appendChild(soundBtn);
+  try {
+    await withFixture(async (f) => {
+      f.ctl.skipTo(4); // the bat-around ends in a corner; bottom-left would win without the sound button
+      const no = App.fx.rectOf(document.querySelector(".no-btn"));
+      assert(!App.geo.rectsOverlap(no, App.fx.rectOf(soundBtn)), `No landed on it at ${JSON.stringify(no)}`);
+    }, { avoidEls: [soundBtn] });
+  } finally {
+    soundBtn.remove();
+  }
+});

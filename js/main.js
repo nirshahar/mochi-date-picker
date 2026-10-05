@@ -32,6 +32,7 @@ window.App = window.App || {};
     const celebrating = () => mochiEl.classList.contains("hop");
     mochiEl.addEventListener("click", () => {
       if (svg.dataset.mood) return;
+      App.sfx.play("purr");
       App.fx.bubble(text, App.fx.rectOf(mochiEl));
       App.fx.floatHeart(App.fx.rectOf(mochiEl));
       svg.dataset.mood = "happy";
@@ -52,6 +53,9 @@ window.App = window.App || {};
     const params = parseParams(window.location.search);
     const $ = (id) => document.getElementById(id);
     const T = CONFIG.text;
+
+    App.sfx.listen(window);
+    App.sfx.bindToggle($("sound-btn"));
 
     const mode = App.notify.deliveryMode({ test: params.test, hash: window.location.hash, linkKey: CONFIG.linkKey });
     const notify = (msg) => { if (mode !== "off") App.notify.send(msg, { test: mode === "test" }); };
@@ -82,6 +86,7 @@ window.App = window.App || {};
         herName: CONFIG.herName, fromName: CONFIG.fromName, catName: CONFIG.catName, idea, day,
       });
       showScreen("ticket");
+      App.sfx.play("tada");
     }
     function showDays(idea) {
       const days = App.dates.upcomingDays(new Date(), CONFIG.dayCount);
@@ -112,7 +117,7 @@ window.App = window.App || {};
     });
     const noCtl = App.setupNoButton({
       noBtn: $("no-btn"), yesBtn: $("yes-btn"), mochiEl, titleEl: $("question-title"),
-      captionEl: $("caption"), appEl: $("app"), onYes,
+      captionEl: $("caption"), appEl: $("app"), onYes, avoidEls: [$("sound-btn")],
     });
     $("yes-btn").addEventListener("click", onYes);
 

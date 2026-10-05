@@ -270,6 +270,25 @@ body:not([data-screen="question"]) #stage { display: none; }
 @keyframes ear-wiggle-l { to { rotate: -30deg; } }
 @keyframes ear-wiggle-r { to { rotate: 30deg; } }
 
+/* ---------- sound toggle ---------- */
+.sound-btn {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 30;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.75);
+  border: 2px solid var(--pink-soft);
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(232, 77, 128, 0.15);
+  transition: background 0.2s, transform 0.2s;
+}
+.sound-btn:hover { background: #fff; transform: scale(1.08); }
+
 /* ---------- celebration ---------- */
 .yes-btn.pop-away,
 .no-btn.pop-away { animation: pop-away 0.4s ease-in forwards; pointer-events: none; }
