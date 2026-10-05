@@ -1,11 +1,9 @@
-// Cute sound effects, synthesized live with Web Audio (no audio files to load).
+// Simple click sounds, synthesized live with Web Audio (no audio files to load).
 window.App = window.App || {};
 
 (function () {
   const VOLUME = 0.6;
   const STORAGE_KEY = "mochi-sound-muted";
-  const C5 = 523.25;
-  const note = (semitones) => C5 * 2 ** (semitones / 12);
 
   // ---------- building blocks: each schedules nodes on `ctx` from time `t`, into `out` ----------
 
@@ -26,11 +24,10 @@ window.App = window.App || {};
     return g;
   }
 
-  // An oscillator whose pitch follows `glide` ([secondsAfterT, Hz] points); `wave` is a custom PeriodicWave.
-  function tone(ctx, out, t, { type = "sine", wave, glide, dur, peak = 0.3, attack, hold }) {
+  // An oscillator whose pitch follows `glide` ([secondsAfterT, Hz] points).
+  function tone(ctx, out, t, { type = "sine", glide, dur, peak = 0.3, attack, hold }) {
     const osc = ctx.createOscillator();
-    if (wave) osc.setPeriodicWave(wave);
-    else osc.type = type;
+    osc.type = type;
     ramp(osc.frequency, t, glide);
     osc.connect(envelope(ctx, out, t, { peak, attack, hold, dur }));
     osc.start(t);
@@ -48,18 +45,6 @@ window.App = window.App || {};
     lfo.connect(amount).connect(param);
     lfo.start(t);
     lfo.stop(t + dur + 0.05);
-  }
-
-  // A soft voice: every harmonic, fading faster than a sawtooth's (1/n^1.6), so it hums instead of buzzing.
-  const voiceWaves = new WeakMap();
-  function voiceWave(ctx) {
-    if (!voiceWaves.has(ctx)) {
-      const real = new Float32Array(25);
-      const imag = new Float32Array(25);
-      for (let n = 1; n < 25; n++) imag[n] = 1 / n ** 1.6;
-      voiceWaves.set(ctx, ctx.createPeriodicWave(real, imag));
-    }
-    return voiceWaves.get(ctx);
   }
 
   const noiseBuffers = new WeakMap();
@@ -86,17 +71,6 @@ window.App = window.App || {};
     src.start(t);
     src.stop(t + dur + 0.05);
     return src;
-  }
-
-  // A bright little note: triangle plus a soft octave above, like a toy piano.
-  function chime(ctx, out, t, { freq, dur = 0.35, peak = 0.2 }) {
-    tone(ctx, out, t, { type: "triangle", glide: [[0, freq]], dur, peak });
-    tone(ctx, out, t, { glide: [[0, freq * 2]], dur: dur * 0.7, peak: peak * 0.35 });
-  }
-
-  // A water-drop "boop": the pitch starts high and drops onto `freq`.
-  function blip(ctx, out, t, { freq, dur = 0.18, peak = 0.3, droop = 1 }) {
-    tone(ctx, out, t, { glide: [[0, freq * 1.6], [0.025, freq], [dur, freq * droop]], dur, peak });
   }
 
   // ---------- the sounds ----------
@@ -142,40 +116,7 @@ window.App = window.App || {};
       });
     },
 
-    // Step 2's "mrrp?!": a hummed "m", a rolled "rrr" (the tongue tapping ~25 times a second, each tap
-    // nearly cutting the sound and muffling it), then an open "p?!" that rises like a question.
-    mrrp(ctx, out, t) {
-      const dur = 0.44;
-      const mouth = ctx.createBiquadFilter();
-      mouth.type = "lowpass";
-      mouth.Q.value = 0.9;
-      const tongue = ctx.createGain();
-      mouth.connect(tongue).connect(out);
-      mouth.frequency.setValueAtTime(450, t); // "m": lips closed
-      mouth.frequency.linearRampToValueAtTime(1100, t + 0.05);
-      tongue.gain.setValueAtTime(1, t);
-      const period = 0.04;
-      const taps = 6;
-      for (let k = 0; k < taps; k++) {
-        const at = t + 0.05 + k * period;
-        tongue.gain.setValueAtTime(1, at);
-        tongue.gain.linearRampToValueAtTime(0.07, at + 0.006);
-        tongue.gain.setValueAtTime(0.07, at + 0.018);
-        tongue.gain.linearRampToValueAtTime(1, at + 0.024);
-        mouth.frequency.setValueAtTime(1100, at);
-        mouth.frequency.linearRampToValueAtTime(420, at + 0.006);
-        mouth.frequency.setValueAtTime(420, at + 0.018);
-        mouth.frequency.linearRampToValueAtTime(1100, at + 0.024);
-      }
-      const open = t + 0.05 + taps * period;
-      mouth.frequency.setValueAtTime(1100, open);
-      mouth.frequency.exponentialRampToValueAtTime(2400, t + 0.4);
-      tone(ctx, mouth, t, {
-        wave: voiceWave(ctx), glide: [[0, 290], [0.28, 315], [0.4, 520]], dur, peak: 0.22, attack: 0.02, hold: 0.38,
-      });
-    },
-
-    // A happy cartoon "mew": the filter opens and closes like a mouth (m-ee-ow).
+    // YES: a happy cartoon "mew" (the filter opens and closes like a mouth: m-ee-ow).
     mew(ctx, out, t) {
       const dur = 0.55;
       const mouth = ctx.createBiquadFilter();
@@ -189,115 +130,14 @@ window.App = window.App || {};
       wobble(ctx, voice.frequency, t, { rate: 7, depth: 12, dur });
     },
 
-    // A paw swiping in; loudest just as it reaches the button.
-    whoosh(ctx, out, t) {
-      noise(ctx, out, t, { sweep: [[0, 500], [0.2, 2600], [0.3, 900]], q: 1.2, dur: 0.32, peak: 0.9, attack: 0.18 });
-    },
-
-    // The paw connecting: a soft "thwap".
-    swat(ctx, out, t) {
-      noise(ctx, out, t, { sweep: [[0, 1800], [0.09, 900]], q: 0.8, dur: 0.1, peak: 0.6, attack: 0.002 });
-      tone(ctx, out, t, { type: "triangle", glide: [[0, 420], [0.1, 140]], dur: 0.12, peak: 0.4, attack: 0.002 });
-    },
-
-    // Step 2's warning tap.
+    // Clicking No or "change my pick": a soft little tap.
     tap(ctx, out, t) {
       tone(ctx, out, t, { glide: [[0, 950], [0.06, 620]], dur: 0.09, peak: 0.3, attack: 0.002 });
     },
 
-    // No landing after a swat: boyoyoyoing.
-    boing(ctx, out, t) {
-      const dur = 0.5;
-      const spring = tone(ctx, out, t, { type: "triangle", glide: [[0, 140], [0.4, 330]], dur, peak: 0.4 });
-      wobble(ctx, spring.frequency, t, { rate: 16, depth: [[0, 70], [dur, 4]], dur });
-    },
-
-    // Biscuit falling from the sky: a slide whistle going down.
-    slide(ctx, out, t) {
-      tone(ctx, out, t, { glide: [[0, 1500], [0.46, 260]], dur: 0.5, peak: 0.16, attack: 0.03, hold: 0.42 });
-    },
-
-    // Biscuit landing on No.
-    thud(ctx, out, t) {
-      tone(ctx, out, t, { type: "triangle", glide: [[0, 160], [0.25, 48]], dur: 0.35, peak: 0.7, attack: 0.003 });
-      noise(ctx, out, t, { filter: "lowpass", sweep: [[0, 700], [0.2, 120]], dur: 0.2, peak: 0.6, attack: 0.002 });
-    },
-
-    // No squeezing out from under Biscuit, like a rubber toy.
-    squeak(ctx, out, t) {
-      const toy = tone(ctx, out, t, { type: "triangle", glide: [[0, 1100], [0.09, 1900], [0.22, 1300]], dur: 0.24, peak: 0.22, attack: 0.01, hold: 0.15 });
-      wobble(ctx, toy.frequency, t, { rate: 24, depth: 40, dur: 0.24 });
-    },
-
-    // The trail of six paw prints (over 0.8s, in step with fx.pawTrail).
-    patter(ctx, out, t) {
-      for (let i = 1; i <= 6; i++) {
-        const at = t + (0.8 * i) / 7;
-        noise(ctx, out, at, { sweep: [[0, i % 2 ? 2400 : 3000]], q: 3, dur: 0.05, peak: 0.6, attack: 0.002 });
-      }
-    },
-
-    // One footstep while Mochi walks: a little pad landing.
-    step(ctx, out, t) {
-      noise(ctx, out, t, { sweep: [[0, 1300 + Math.random() * 500], [0.06, 500]], q: 1, dur: 0.08, peak: 0.75, attack: 0.003 });
-      tone(ctx, out, t, { type: "triangle", glide: [[0, 240], [0.06, 130]], dur: 0.08, peak: 0.19, attack: 0.003 });
-    },
-
-    // A pat in the bat-around; `pitch` (semitones above C5) makes the three pats rise.
-    boop(ctx, out, t, { pitch = 0 } = {}) {
-      blip(ctx, out, t, { freq: note(pitch), dur: 0.2, peak: 0.32 });
-    },
-
-    // The bat-around's final BONK: a hollow knock with a big low thump under it, and a cartoon ring.
-    bonk(ctx, out, t) {
-      tone(ctx, out, t, { glide: [[0, 190], [0.25, 60]], dur: 0.35, peak: 0.75, attack: 0.002 });
-      const knock = tone(ctx, out, t, { type: "triangle", glide: [[0, 480], [0.18, 200]], dur: 0.4, peak: 0.6, attack: 0.002 });
-      wobble(ctx, knock.frequency, t, { rate: 20, depth: [[0, 25], [0.4, 2]], dur: 0.4 });
-      const hollow = ctx.createBiquadFilter();
-      hollow.type = "lowpass";
-      hollow.frequency.value = 1600;
-      hollow.connect(out);
-      tone(ctx, hollow, t, { type: "square", glide: [[0, 330], [0.15, 160]], dur: 0.22, peak: 0.22, attack: 0.002 });
-      noise(ctx, out, t, { sweep: [[0, 2200]], q: 1.5, dur: 0.035, peak: 0.8, attack: 0.001 });
-    },
-
-    // "no has left the chat": two notes going down, the second one drooping.
-    leave(ctx, out, t) {
-      blip(ctx, out, t, { freq: note(7), dur: 0.16, peak: 0.3 });
-      blip(ctx, out, t + 0.17, { freq: note(0), dur: 0.36, peak: 0.3, droop: 0.85 });
-    },
-
-    // Mochi bringing No back as "yes 💕": a quick sparkly arpeggio up.
-    sparkle(ctx, out, t) {
-      [12, 16, 19, 24].forEach((st, i) => chime(ctx, out, t + i * 0.07, { freq: note(st), dur: 0.4, peak: 0.14 }));
-    },
-
-    // YES: ta-da-da-DAAA, then a happy mew.
-    fanfare(ctx, out, t) {
-      [0, 4, 7].forEach((st, i) => chime(ctx, out, t + i * 0.12, { freq: note(st), dur: 0.22, peak: 0.2 }));
-      chime(ctx, out, t + 0.36, { freq: note(12), dur: 0.8, peak: 0.24 });
-      SOUNDS.mew(ctx, out, t + 0.95);
-    },
-
-    // Little plinks while the cats rain down (random notes of a pentatonic scale).
-    sparkles(ctx, out, t) {
-      const scale = [0, 2, 4, 7, 9];
-      for (let i = 0; i < 14; i++) {
-        const st = 12 + scale[Math.floor(Math.random() * scale.length)] + (Math.random() < 0.4 ? 12 : 0);
-        tone(ctx, out, t + Math.random() * 2.2, { glide: [[0, note(st)]], dur: 0.25, peak: 0.07 + Math.random() * 0.05 });
-      }
-    },
-
-    // A card being stamped with a paw.
+    // A card being stamped with a paw (and unmuting).
     pop(ctx, out, t) {
       tone(ctx, out, t, { glide: [[0, 380], [0.06, 1300]], dur: 0.1, peak: 0.35, attack: 0.002 });
-    },
-
-    // The ticket: ta-da, then a soft thump when its paw stamp lands (0.9s, as in the CSS).
-    tada(ctx, out, t) {
-      chime(ctx, out, t, { freq: note(7), dur: 0.14, peak: 0.2 });
-      chime(ctx, out, t + 0.14, { freq: note(12), dur: 0.6, peak: 0.24 });
-      tone(ctx, out, t + 0.9, { type: "triangle", glide: [[0, 300], [0.1, 120]], dur: 0.14, peak: 0.3, attack: 0.002 });
     },
   };
 

@@ -21,6 +21,7 @@ function noButtonFixture({ avoidEls = [] } = {}) {
     ctl,
     stage,
     mochiEl: $(".mochi-spot"),
+    noBtn: $(".no-btn"),
     mochiSvg: $(".mochi-spot svg"),
     caption: $(".caption"),
     cleanup() {
@@ -72,44 +73,36 @@ test("no-button: YES while Mochi is walking off brings her home (no second Mochi
   eq(f.mochiEl.style.visibility, "", "home Mochi visible");
 }));
 
-test("sounds: the first swat whooshes, then smacks on contact", () => withFixture(async (f) => {
-  const played = await recordSounds(async (log) => {
-    f.ctl.escalation.attempt();
-    await pause(50);
-    eq(log, ["whoosh"], "paw on its way");
-    await pause(400); // past the paw's contact (~230ms)
-  });
-  eq(played, ["whoosh", "swat"]);
-}));
+// On this branch only her clicks make sounds; Mochi's tricks are silent.
+const pressNo = (f) => f.noBtn.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
 
-test("sounds: YES mid-swat silences the rest of the trick", () => withFixture(async (f) => {
+test("sounds: every click on No taps, even mid-trick", () => withFixture(async (f) => {
   const played = await recordSounds(async () => {
-    f.ctl.escalation.attempt();
+    pressNo(f);
+    await pause(500); // the swat is still running, so this click is ignored…
+    pressNo(f);
     await pause(50);
-    f.ctl.deactivate();
-    await pause(500);
   });
-  eq(played, ["whoosh"]);
+  eq(played, ["tap", "tap"]); // …but it still taps
 }));
 
-test("sounds: Mochi's warning starts with a mrrp", () => withFixture(async (f) => {
-  f.ctl.skipTo(1);
-  const played = await recordSounds(() => { f.ctl.escalation.attempt(); }); // the trick itself never ends here
-  eq(played[0], "mrrp");
-}));
+test("sounds: Mochi's tricks make no sound of their own", async () => {
+  for (let n = 0; n < 5; n++) {
+    await withFixture(async (f) => {
+      f.ctl.skipTo(n);
+      const played = await recordSounds(async () => {
+        f.ctl.escalation.attempt(); // runs until its first animation, which never ends here
+        await pause(400);
+      });
+      eq(played, [], `trick ${n + 1}`);
+    });
+  }
+});
 
-test("sounds: YES while Mochi walks off stops her footsteps", () => withFixture(async (f) => {
-  f.ctl.skipTo(4);
-  const played = await recordSounds(async (log) => {
-    f.ctl.escalation.attempt(); // step 5: Mochi walks over to No
-    await pause(700);
-    assert(log.includes("step"), `footsteps while walking (got ${JSON.stringify(log)})`);
-    f.ctl.deactivate();
-    const before = log.length;
-    await pause(700);
-    eq(log.length, before, "no footsteps after YES");
-  });
-  assert(played.length > 0);
+test("sounds: clicking 'yes 💕' taps too", () => withFixture(async (f) => {
+  f.ctl.skipTo(5);
+  const played = await recordSounds(() => pressNo(f));
+  eq(played, ["tap"]);
 }));
 
 test("no-button: No never lands on the sound button", async () => {

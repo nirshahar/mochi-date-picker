@@ -1,6 +1,5 @@
 // Sound effects are rendered into an OfflineAudioContext, so the tests "hear" what she would.
-const SOUND_NAMES = ["purr", "mrrp", "mew", "whoosh", "swat", "tap", "boing", "slide", "thud",
-  "squeak", "patter", "boop", "bonk", "step", "leave", "sparkle", "fanfare", "sparkles", "pop", "tada"];
+const SOUND_NAMES = ["purr", "pop", "tap", "mew"];
 const RATE = 22050;
 
 function memoryStorage() {
@@ -64,17 +63,17 @@ test("sfx: an unknown sound name is ignored", async () => {
 test("sfx: muted plays nothing", async () => {
   const r = await render((sfx) => {
     sfx.setMuted(true);
-    eq(sfx.play("fanfare"), false);
+    eq(sfx.play("mew"), false);
   });
   eq(r.peak, 0);
 });
 
 test("sfx: muting cuts a sound that is already playing", async () => {
   const r = await render((sfx, ctx) => {
-    sfx.play("fanfare");
+    sfx.play("purr");
     ctx.suspend(0.3).then(() => { sfx.setMuted(true); ctx.resume(); });
   }, { quietFrom: 0.45 });
-  assert(r.peak > 0.02, "fanfare started");
+  assert(r.peak > 0.02, "purr started");
   assert(r.after < 0.001, `still audible after mute (${r.after.toFixed(4)})`);
 });
 
@@ -166,7 +165,7 @@ test("sounds: picking a date or a day card pops", async () => {
   eq(played, ["pop", "pop"]);
 });
 
-test("sounds: YES plays the fanfare and sparkles with the cat rain", async () => {
+test("sounds: YES mews", async () => {
   const rain = document.createElement("div");
   rain.id = "rain";
   const stage = document.createElement("div");
@@ -184,7 +183,7 @@ test("sounds: YES plays the fanfare and sparkles with the cat rain", async () =>
         titleEl: $("h1")[0], subEl: $("p")[0], captionEl: $("p")[1],
       });
     });
-    eq(played, ["fanfare", "sparkles"]);
+    eq(played, ["mew"]);
     await celebration; // its floating hearts need the stage until it's over
   } finally {
     box.remove();

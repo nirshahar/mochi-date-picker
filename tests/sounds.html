@@ -25,14 +25,8 @@
   <script src="../js/sfx.js"></script>
   <script>
     const WHERE = {
-      purr: "petting Mochi", mrrp: "trick 2: Mochi is alarmed", whoosh: "a paw swipes in",
-      swat: "the paw hits No", tap: "trick 2: the warning tap", boing: "No lands after a swat",
-      slide: "trick 3: Biscuit falls", thud: "trick 3: Biscuit lands", squeak: "trick 3: No squeezes out",
-      patter: "trick 3: paw-print trail", boop: "trick 4: the three pats", bonk: "trick 4: BONK",
-      step: "trick 5: Mochi's footsteps", leave: "trick 5: no has left the chat",
-      sparkle: "trick 5: No comes back as yes 💕", fanfare: "YES (ends with the mew)",
-      mew: "inside the fanfare", sparkles: "YES: the cat rain", pop: "picking a card, unmuting",
-      tada: "the date ticket",
+      purr: "petting Mochi", mew: "clicking YES", tap: "clicking No, or \"change my pick\"",
+      pop: "picking an activity or a day, unmuting",
     };
     const sfx = App.createSfx({ storage: null }); // ignores the page's mute button
     const board = document.getElementById("board");
@@ -44,8 +38,7 @@
       btn.querySelector("span").textContent = WHERE[name] || "";
       btn.addEventListener("click", () => {
         sfx.unlock();
-        if (name === "boop") [0, 4, 7].forEach((pitch, i) => setTimeout(() => sfx.play("boop", { pitch }), i * 600));
-        else sfx.play(name);
+        sfx.play(name);
       });
       board.appendChild(btn);
     });

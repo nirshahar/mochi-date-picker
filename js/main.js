@@ -86,7 +86,6 @@ window.App = window.App || {};
         herName: CONFIG.herName, fromName: CONFIG.fromName, catName: CONFIG.catName, idea, day,
       });
       showScreen("ticket");
-      App.sfx.play("tada");
     }
     function showDays(idea) {
       const days = App.dates.upcomingDays(new Date(), CONFIG.dayCount);
@@ -104,7 +103,10 @@ window.App = window.App || {};
       });
       showScreen("dates");
     }
-    $("change-pick").addEventListener("click", showDates);
+    $("change-pick").addEventListener("click", () => {
+      App.sfx.play("tap");
+      showDates();
+    });
 
     const onYes = App.fx.once(async () => {
       noCtl.deactivate();
