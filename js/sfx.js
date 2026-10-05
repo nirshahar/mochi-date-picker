@@ -26,10 +26,11 @@ window.App = window.App || {};
     return g;
   }
 
-  // An oscillator whose pitch follows `glide` ([secondsAfterT, Hz] points).
-  function tone(ctx, out, t, { type = "sine", glide, dur, peak = 0.3, attack, hold }) {
+  // An oscillator whose pitch follows `glide` ([secondsAfterT, Hz] points); `wave` is a custom PeriodicWave.
+  function tone(ctx, out, t, { type = "sine", wave, glide, dur, peak = 0.3, attack, hold }) {
     const osc = ctx.createOscillator();
-    osc.type = type;
+    if (wave) osc.setPeriodicWave(wave);
+    else osc.type = type;
     ramp(osc.frequency, t, glide);
     osc.connect(envelope(ctx, out, t, { peak, attack, hold, dur }));
     osc.start(t);
@@ -47,6 +48,18 @@ window.App = window.App || {};
     lfo.connect(amount).connect(param);
     lfo.start(t);
     lfo.stop(t + dur + 0.05);
+  }
+
+  // A soft voice: every harmonic, fading faster than a sawtooth's (1/n^1.6), so it hums instead of buzzing.
+  const voiceWaves = new WeakMap();
+  function voiceWave(ctx) {
+    if (!voiceWaves.has(ctx)) {
+      const real = new Float32Array(25);
+      const imag = new Float32Array(25);
+      for (let n = 1; n < 25; n++) imag[n] = 1 / n ** 1.6;
+      voiceWaves.set(ctx, ctx.createPeriodicWave(real, imag));
+    }
+    return voiceWaves.get(ctx);
   }
 
   const noiseBuffers = new WeakMap();
@@ -75,15 +88,6 @@ window.App = window.App || {};
     return src;
   }
 
-  // A rolled "rrr": a tone whose loudness flutters ~30 times a second.
-  function trill(ctx, out, t, { glide, dur, peak }) {
-    const flutter = ctx.createGain();
-    flutter.gain.value = 0.6;
-    flutter.connect(out);
-    wobble(ctx, flutter.gain, t, { rate: 30, depth: 0.4, dur });
-    tone(ctx, flutter, t, { type: "triangle", glide, dur, peak, attack: 0.02, hold: dur * 0.6 });
-  }
-
   // A bright little note: triangle plus a soft octave above, like a toy piano.
   function chime(ctx, out, t, { freq, dur = 0.35, peak = 0.2 }) {
     tone(ctx, out, t, { type: "triangle", glide: [[0, freq]], dur, peak });
@@ -97,20 +101,78 @@ window.App = window.App || {};
 
   // ---------- the sounds ----------
   const SOUNDS = {
-    // Petting Mochi: a tiny "prrt" and then a rumbling purr.
+    // Petting Mochi: a purr is ~25 soft rattles a second, swelling as she breathes out, then softer in.
     purr(ctx, out, t) {
-      trill(ctx, out, t, { glide: [[0, 620], [0.14, 820]], dur: 0.16, peak: 0.12 });
-      const dur = 1.1;
-      const pulse = ctx.createGain();
-      pulse.gain.value = 0.5;
-      pulse.connect(envelope(ctx, out, t + 0.1, { peak: 1.6, attack: 0.15, hold: 0.75, dur }));
-      wobble(ctx, pulse.gain, t + 0.1, { rate: 26, depth: 0.5, dur });
-      noise(ctx, pulse, t + 0.1, { filter: "lowpass", sweep: [[0, 520]], q: 0.7, dur, peak: 1, attack: 0.001, hold: dur - 0.01 });
+      const rate = ctx.sampleRate;
+      const breaths = [
+        { start: 0, dur: 0.75, pulses: 25, level: 1 }, // out
+        { start: 0.82, dur: 0.55, pulses: 27, level: 0.55 }, // in
+      ];
+      const buffer = ctx.createBuffer(1, Math.ceil(rate * 1.45), rate);
+      const data = buffer.getChannelData(0);
+      const len = Math.floor(rate * 0.045);
+      breaths.forEach(({ start, dur, pulses, level }) => {
+        // a little uneven, like a real cat
+        for (let at = start; at < start + dur; at += (1 + (Math.random() - 0.5) * 0.2) / pulses) {
+          const swell = level * Math.sin((Math.PI * (at - start)) / dur) * (0.75 + Math.random() * 0.25);
+          const from = Math.floor(at * rate);
+          for (let i = 0; i < len && from + i < data.length; i++) {
+            const x = i / (rate * 0.006); // each rattle swells in over 6ms and dies away, no click
+            data[from + i] += swell * (Math.random() * 2 - 1) * x * Math.exp(1 - x);
+          }
+        }
+      });
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      // two lowpasses in a row: a purr is all chest, nothing above ~650 Hz
+      const chest = [650, 650].map((f) => {
+        const lp = ctx.createBiquadFilter();
+        lp.type = "lowpass";
+        lp.frequency.value = f;
+        lp.Q.value = 0.7;
+        return lp;
+      });
+      const level = ctx.createGain();
+      level.gain.value = 2;
+      src.connect(chest[0]).connect(chest[1]).connect(level).connect(out);
+      src.start(t);
+      // the breath itself: a little air under the rattle
+      breaths.forEach(({ start, dur, level: l }) => {
+        noise(ctx, out, t + start, { sweep: [[0, 1100]], q: 0.5, dur, peak: 0.05 * l, attack: dur * 0.4, hold: dur * 0.5 });
+      });
     },
 
-    // Step 2's "mrrp?!": a trill that rises at the end, like a question.
+    // Step 2's "mrrp?!": a hummed "m", a rolled "rrr" (the tongue tapping ~25 times a second, each tap
+    // nearly cutting the sound and muffling it), then an open "p?!" that rises like a question.
     mrrp(ctx, out, t) {
-      trill(ctx, out, t, { glide: [[0, 520], [0.18, 600], [0.34, 1080]], dur: 0.38, peak: 0.4 });
+      const dur = 0.44;
+      const mouth = ctx.createBiquadFilter();
+      mouth.type = "lowpass";
+      mouth.Q.value = 0.9;
+      const tongue = ctx.createGain();
+      mouth.connect(tongue).connect(out);
+      mouth.frequency.setValueAtTime(450, t); // "m": lips closed
+      mouth.frequency.linearRampToValueAtTime(1100, t + 0.05);
+      tongue.gain.setValueAtTime(1, t);
+      const period = 0.04;
+      const taps = 6;
+      for (let k = 0; k < taps; k++) {
+        const at = t + 0.05 + k * period;
+        tongue.gain.setValueAtTime(1, at);
+        tongue.gain.linearRampToValueAtTime(0.07, at + 0.006);
+        tongue.gain.setValueAtTime(0.07, at + 0.018);
+        tongue.gain.linearRampToValueAtTime(1, at + 0.024);
+        mouth.frequency.setValueAtTime(1100, at);
+        mouth.frequency.linearRampToValueAtTime(420, at + 0.006);
+        mouth.frequency.setValueAtTime(420, at + 0.018);
+        mouth.frequency.linearRampToValueAtTime(1100, at + 0.024);
+      }
+      const open = t + 0.05 + taps * period;
+      mouth.frequency.setValueAtTime(1100, open);
+      mouth.frequency.exponentialRampToValueAtTime(2400, t + 0.4);
+      tone(ctx, mouth, t, {
+        wave: voiceWave(ctx), glide: [[0, 290], [0.28, 315], [0.4, 520]], dur, peak: 0.22, attack: 0.02, hold: 0.38,
+      });
     },
 
     // A happy cartoon "mew": the filter opens and closes like a mouth (m-ee-ow).
@@ -175,9 +237,10 @@ window.App = window.App || {};
       }
     },
 
-    // One soft footstep while Mochi walks.
+    // One footstep while Mochi walks: a little pad landing.
     step(ctx, out, t) {
-      noise(ctx, out, t, { filter: "lowpass", sweep: [[0, 700 + Math.random() * 300]], dur: 0.06, peak: 0.3, attack: 0.003 });
+      noise(ctx, out, t, { sweep: [[0, 1300 + Math.random() * 500], [0.06, 500]], q: 1, dur: 0.08, peak: 0.75, attack: 0.003 });
+      tone(ctx, out, t, { type: "triangle", glide: [[0, 240], [0.06, 130]], dur: 0.08, peak: 0.19, attack: 0.003 });
     },
 
     // A pat in the bat-around; `pitch` (semitones above C5) makes the three pats rise.
@@ -185,11 +248,17 @@ window.App = window.App || {};
       blip(ctx, out, t, { freq: note(pitch), dur: 0.2, peak: 0.32 });
     },
 
-    // The bat-around's final BONK.
+    // The bat-around's final BONK: a hollow knock with a big low thump under it, and a cartoon ring.
     bonk(ctx, out, t) {
-      tone(ctx, out, t, { type: "triangle", glide: [[0, 520], [0.12, 250]], dur: 0.24, peak: 0.5, attack: 0.002 });
-      tone(ctx, out, t, { glide: [[0, 1560], [0.05, 900]], dur: 0.07, peak: 0.2, attack: 0.001 });
-      noise(ctx, out, t, { sweep: [[0, 1200]], q: 2, dur: 0.04, peak: 0.5, attack: 0.001 });
+      tone(ctx, out, t, { glide: [[0, 190], [0.25, 60]], dur: 0.35, peak: 0.75, attack: 0.002 });
+      const knock = tone(ctx, out, t, { type: "triangle", glide: [[0, 480], [0.18, 200]], dur: 0.4, peak: 0.6, attack: 0.002 });
+      wobble(ctx, knock.frequency, t, { rate: 20, depth: [[0, 25], [0.4, 2]], dur: 0.4 });
+      const hollow = ctx.createBiquadFilter();
+      hollow.type = "lowpass";
+      hollow.frequency.value = 1600;
+      hollow.connect(out);
+      tone(ctx, hollow, t, { type: "square", glide: [[0, 330], [0.15, 160]], dur: 0.22, peak: 0.22, attack: 0.002 });
+      noise(ctx, out, t, { sweep: [[0, 2200]], q: 1.5, dur: 0.035, peak: 0.8, attack: 0.001 });
     },
 
     // "no has left the chat": two notes going down, the second one drooping.
